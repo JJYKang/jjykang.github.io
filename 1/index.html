@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>SYDE 671 Assignment 1 &mdash; Jerry Kang</title>
+  <link rel="stylesheet" href="./style.css">
+  <!-- MathJax for LaTeX rendering -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
+    };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head>
+
+<body>
+
+  <header>
+    <a href="../index.html" class="back-link">&larr; Back to Portfolio</a>
+    <h1>Assignment 1: Camera Optics &amp; Prokudin-Gorskii Colorization</h1>
+    <div class="subtitle">SYDE 671: Advanced Computer Vision &bull; University of Waterloo</div>
+    <div class="author">Jerry Kang</div>
+  </header>
+
+  <!-- ============================================================ -->
+  <!-- PART 1: OPTICS -->
+  <!-- ============================================================ -->
+  <section id="part1">
+    <h2>Part 1: Becoming Friends with your Camera</h2>
+
+    <h3>Part 1.1: Selfie &mdash; The Wrong Way vs. The Right Way</h3>
+    <div class="grid-2">
+      <div class="img-card">
+        <img src="./media/selfie/IMG_2733.jpg" alt="Close-Up Selfie (The Wrong Way)" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">Close-Up Selfie (The Wrong Way)</div>
+          Wide-angle close-up (~20cm). Strong perspective distortion exaggerates facial features.
+        </div>
+      </div>
+
+      <div class="img-card">
+        <img src="./media/selfie/IMG_2732.jpg" alt="Telephoto Portrait (The Right Way)" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">Telephoto Portrait (The Right Way)</div>
+          Stepped back with telephoto zoom to match subject scale. Perspective is flattened and natural.
+        </div>
+      </div>
+    </div>
+
+    <h3>Part 1.2: Architectural Perspective Compression</h3>
+    <div class="grid-2">
+      <div class="img-card">
+        <img src="./media/arch/IMG_2750.jpg" alt="Walkway (Zoomed In from Far)" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">Telephoto Compression (Far + Zoom)</div>
+          Distant shot with zoom. Background trees and buildings appear compressed against the foreground.
+        </div>
+      </div>
+
+      <div class="img-card">
+        <img src="./media/arch/IMG_2752.jpg" alt="Walkway (Walked Closer, No Zoom)" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">Wide Angle (Walked Closer, No Zoom)</div>
+          Walked closer with no zoom. Apparent depth is exaggerated and background elements appear smaller.
+        </div>
+      </div>
+    </div>
+
+    <h3>Part 1.3: The Dolly Zoom (&ldquo;Vertigo Shot&rdquo;)</h3>
+    <div style="max-width: 500px; margin: 15px auto;">
+      <div class="img-card">
+        <img src="./media/dolly_zoom.gif" alt="Dolly Zoom Animation" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">Animated Dolly Zoom Sequence</div>
+          Subject scale is kept approximately constant while moving the camera back and zooming in.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="part2">
+    <h2>Part 2: Colorizing the Prokudin-Gorskii Glass Plate Collection</h2>
+    <p>
+      Digitized glass plates contain three vertically stacked monochrome exposures (Blue, Green, Red). Stacking them
+      directly results in misaligned color fringing, so we find the $(x, y)$ displacement vectors that align Green and
+      Red to the Blue channel base.
+    </p>
+
+    <h3>1. Loading &amp; Channel Splitting</h3>
+    <p>
+      Plates are loaded as 32-bit float arrays and scaled to $[0.0, 1.0]$ based on bit depth (divided by 65535 for
+      16-bit TIFFs or 255 for 8-bit JPEGs). The image is divided vertically into equal thirds: Blue, Green, and Red,
+      with Blue fixed as the base.
+    </p>
+
+    <h3>2. Alignment Metrics</h3>
+    <p>
+      We evaluated two metrics to score candidate shifts:
+    </p>
+    <ul>
+      <li>
+        <strong>Sum of Squared Differences (SSD / L2):</strong>
+        $$\text{SSD}(u, v) = \sum_{i} (u_i - v_i)^2$$
+        Measures squared intensity differences (lower is better). Sensitive to overall brightness differences between
+        color channels.
+      </li>
+      <li>
+        <strong>Normalized Cross-Correlation (NCC):</strong>
+        $$\text{NCC}(u, v) = \frac{u \cdot v}{\|u\|_2 \, \|v\|_2}$$
+        Computes cosine similarity between normalized vectors (higher is better). Normalizes for brightness and exposure
+        differences across channels, making it more reliable than SSD.
+      </li>
+    </ul>
+
+    <h3>3. Border Handling</h3>
+    <p>
+      Glass plates have dark borders and scanning artifacts that trick metrics into aligning the frame rather than the
+      photograph, and introduces extra computation costs. To avoid this, we apply shifts to the full channel but
+      evaluate NCC strictly on the central 80% interior (cropping a 10% margin on all sides).
+    </p>
+
+    <h3>4. Search Strategy</h3>
+    <p>
+      Depending on image resolution, we select between:
+    </p>
+    <ul>
+      <li><strong>Single-scale exhaustive search:</strong> Searches a $[-15, 15]$ pixel window, used for low-res plates
+        (~400 px width).</li>
+      <li><strong>Multi-scale image pyramid:</strong> Coarse-to-fine search used for high-res plates (~3700&times;3200
+        px) where shifts exceed 100 pixels.</li>
+    </ul>
+
+    <h3>5. RGB Compositing</h3>
+    <p>
+      Once Green and Red are aligned relative to Blue, channels are stacked into RGB order via
+      <code>np.stack([aligned_r, aligned_g, b], axis=-1)</code> and clipped to $[0.0, 1.0]$.
+    </p>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SINGLE-SCALE RESULTS -->
+  <!-- ============================================================ -->
+  <section id="single-scale">
+    <h2>Single-Scale Alignment Results</h2>
+    <p>
+      <strong>Algorithm:</strong> For low-resolution plates (~400 px width), channel displacements are small (typically within &plusmn;15 pixels). The single-scale exhaustive search proceeds step-by-step:
+    </p>
+    <ol>
+      <li><strong>Interior Window Cropping:</strong> Crop a 10% margin on all sides of the base channel to isolate the central 80% interior, avoiding dark borders and scanning artifacts.</li>
+      <li><strong>Search Grid Definition:</strong> Define an exhaustive grid over all candidate shifts $(dy, dx) \in [-15, 15] \times [-15, 15]$ (961 candidate offsets).</li>
+      <li><strong>Candidate Translation:</strong> For each candidate displacement $(dy, dx)$, roll the target channel using <code>np.roll</code> and extract the corresponding interior window.</li>
+      <li><strong>Metric Evaluation:</strong> Score the similarity between the base channel crop and the shifted target crop using Normalized Cross-Correlation (NCC).</li>
+      <li><strong>Optimal Shift Selection:</strong> Track the maximum NCC score and return the $(dy, dx)$ displacement that yields the best alignment.</li>
+    </ol>
+    <p>
+      Single-scale alignment was run on the three benchmark low-resolution plates: <strong>Cathedral</strong>
+      (<code>00125v.jpg</code>), <strong>Monastery</strong> (<code>00056v.jpg</code>), and <strong>Tobolsk</strong>
+      (<code>01164v.jpg</code>).
+    </p>
+
+    <div class="grid-3">
+      <div class="img-card">
+        <img src="./media/enhanced/00125v_aligned.jpg" alt="Cathedral (00125v.jpg)" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">Cathedral</div>
+          <div class="img-filename"><code>00125v.jpg</code></div>
+          green shift: (2, 5) &bull; red shift: (1, 10)
+        </div>
+      </div>
+
+      <div class="img-card">
+        <img src="./media/enhanced/00056v_aligned.jpg" alt="Monastery (00056v.jpg)" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">Monastery</div>
+          <div class="img-filename"><code>00056v.jpg</code></div>
+          green shift: (1, 6) &bull; red shift: (1, 13)
+        </div>
+      </div>
+
+      <div class="img-card">
+        <img src="./media/enhanced/01164v_aligned.jpg" alt="Tobolsk (01164v.jpg)" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">Tobolsk</div>
+          <div class="img-filename"><code>01164v.jpg</code></div>
+          green shift: (2, 6) &bull; red shift: (3, 11)
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- MULTI-SCALE PYRAMID RESULTS (ALL 18 IMAGES) -->
+  <!-- ============================================================ -->
+  <section id="pyramid">
+    <h2>Multi-Scale Pyramid Alignment Results (All 18 Dataset Images)</h2>
+    <p>
+      <strong>Algorithm:</strong> For high-resolution scans (~3700&times;3200 px per channel), displacements frequently
+      exceed 100 pixels, making exhaustive search computationally infeasible. We
+      implemented a recursive coarse-to-fine image pyramid:
+    </p>
+    <ol>
+      <li><strong>Base Case:</strong> If either channel dimension is $\le 200$ pixels, execute single-scale exhaustive
+        search over a $[-15, 15]$ window.</li>
+      <li><strong>Downsampling:</strong> Otherwise, downsample base and target channels by a factor of 2 using bilinear
+        interpolation (<code>cv2.resize</code>) and recursively call <code>align_pyramid</code>.</li>
+      <li><strong>Offset Scaling:</strong> Multiply the coarse displacement returned from the lower scale by 2
+        (<code>dy *= 2</code>, <code>dx *= 2</code>).</li>
+      <li><strong>Local Refinement:</strong> Pre-shift the target channel by the coarse estimate and search a small
+        $[-2, 2]$ refinement window to find residual adjustments $(\Delta y, \Delta x)$.</li>
+      <li><strong>Accumulation:</strong> Return the total accumulated displacement $(dy + \Delta y, dx + \Delta x)$.
+      </li>
+    </ol>
+    <p>
+      This reduces search complexity from $O(W^2)$ to $O(\log N)$ pyramid levels. Below are the results of running the pyramid alignment across all 18 dataset images using NCC.
+    </p>
+
+    <div class="grid-3">
+      <!-- 1 -->
+      <div class="img-card">
+        <img src="./media/enhanced/00056v_aligned.jpg" alt="00056v aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">00056v.jpg</div>
+          <div class="img-res">Low-Res</div>
+          green shift: (1, 6) &bull; red shift: (1, 13)
+        </div>
+      </div>
+
+      <!-- 2 -->
+      <div class="img-card">
+        <img src="./media/enhanced/00125v_aligned.jpg" alt="00125v aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">00125v.jpg</div>
+          <div class="img-res">Low-Res</div>
+          green shift: (2, 5) &bull; red shift: (1, 10)
+        </div>
+      </div>
+
+      <!-- 3 -->
+      <div class="img-card">
+        <img src="./media/enhanced/00163v_aligned.jpg" alt="00163v aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">00163v.jpg</div>
+          <div class="img-res">Low-Res</div>
+          green shift: (1, -3) &bull; red shift: (1, -4)
+        </div>
+      </div>
+
+      <!-- 4 -->
+      <div class="img-card">
+        <img src="./media/enhanced/00458u_aligned.jpg" alt="00458u aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">00458u.jpg</div>
+          <div class="img-res">High-Res</div>
+          green shift: (6, 43) &bull; red shift: (32, 87)
+        </div>
+      </div>
+
+      <!-- 5 -->
+      <div class="img-card">
+        <img src="./media/enhanced/00804v_aligned.jpg" alt="00804v aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">00804v.jpg</div>
+          <div class="img-res">Low-Res</div>
+          green shift: (-2, 6) &bull; red shift: (-4, 13)
+        </div>
+      </div>
+
+      <!-- 6 -->
+      <div class="img-card">
+        <img src="./media/enhanced/01007a_aligned.jpg" alt="01007a aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">01007a.jpg</div>
+          <div class="img-res">High-Res</div>
+          green shift: (14, 60) &bull; red shift: (13, 129)
+        </div>
+      </div>
+
+      <!-- 7 -->
+      <div class="img-card">
+        <img src="./media/enhanced/01047u_aligned.jpg" alt="01047u aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">01047u.jpg</div>
+          <div class="img-res">High-Res</div>
+          green shift: (20, 24) &bull; red shift: (33, 71)
+        </div>
+      </div>
+
+      <!-- 8 -->
+      <div class="img-card">
+        <img src="./media/enhanced/01164v_aligned.jpg" alt="01164v aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">01164v.jpg</div>
+          <div class="img-res">Low-Res</div>
+          green shift: (2, 6) &bull; red shift: (3, 11)
+        </div>
+      </div>
+
+      <!-- 9 -->
+      <div class="img-card">
+        <img src="./media/enhanced/01269v_aligned.jpg" alt="01269v aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">01269v.jpg</div>
+          <div class="img-res">Low-Res</div>
+          green shift: (2, 6) &bull; red shift: (3, 13)
+        </div>
+      </div>
+
+      <!-- 10 -->
+      <div class="img-card">
+        <img src="./media/enhanced/01522v_aligned.jpg" alt="01522v aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">01522v.jpg</div>
+          <div class="img-res">Low-Res</div>
+          green shift: (2, 6) &bull; red shift: (2, 13)
+        </div>
+      </div>
+
+      <!-- 11 -->
+      <div class="img-card">
+        <img src="./media/enhanced/01597v_aligned.jpg" alt="01597v aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">01597v.jpg</div>
+          <div class="img-res">Low-Res</div>
+          green shift: (1, 7) &bull; red shift: (1, 16)
+        </div>
+      </div>
+
+      <!-- 12 -->
+      <div class="img-card">
+        <img src="./media/enhanced/01598v_aligned.jpg" alt="01598v aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">01598v.jpg</div>
+          <div class="img-res">Low-Res</div>
+          green shift: (0, 8) &bull; red shift: (-1, 16)
+        </div>
+      </div>
+
+      <!-- 13 -->
+      <div class="img-card">
+        <img src="./media/enhanced/01657u_aligned.jpg" alt="01657u aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">01657u.jpg</div>
+          <div class="img-res">High-Res</div>
+          green shift: (8, 55) &bull; red shift: (11, 117)
+        </div>
+      </div>
+
+      <!-- 14 -->
+      <div class="img-card">
+        <img src="./media/enhanced/01725u_aligned.jpg" alt="01725u aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">01725u.jpg</div>
+          <div class="img-res">High-Res</div>
+          green shift: (44, 77) &bull; red shift: (77, 161)
+        </div>
+      </div>
+
+      <!-- 15 -->
+      <div class="img-card">
+        <img src="./media/enhanced/01728v_aligned.jpg" alt="01728v aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">01728v.jpg</div>
+          <div class="img-res">Low-Res</div>
+          green shift: (1, 8) &bull; red shift: (1, 18)
+        </div>
+      </div>
+
+      <!-- 16 -->
+      <div class="img-card">
+        <img src="./media/enhanced/01861a_aligned.jpg" alt="01861a aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">01861a.jpg</div>
+          <div class="img-res">High-Res</div>
+          green shift: (39, 71) &bull; red shift: (63, 148)
+        </div>
+      </div>
+
+      <!-- 17 -->
+      <div class="img-card">
+        <img src="./media/enhanced/10131v_aligned.jpg" alt="10131v aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">10131v.jpg</div>
+          <div class="img-res">Low-Res</div>
+          green shift: (2, 6) &bull; red shift: (3, 12)
+        </div>
+      </div>
+
+      <!-- 18 -->
+      <div class="img-card">
+        <img src="./media/enhanced/31421v_aligned.jpg" alt="31421v aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">31421v.jpg</div>
+          <div class="img-res">Low-Res</div>
+          green shift: (0, 8) &bull; red shift: (0, 13)
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- CUSTOM LOC PLATES -->
+  <!-- ============================================================ -->
+  <section id="custom">
+    <h2>Custom Images from the Library of Congress</h2>
+    <p>
+      In addition to the 18 example images provided, 3 additional glass plate negatives were downloaded from the Library
+      of Congress Prokudin-Gorskii collection and processed using the pyramid alignment algorithm:
+    </p>
+
+    <div class="grid-3">
+      <div class="img-card">
+        <img src="./media/enhanced/00220v_aligned.jpg" alt="00220v custom aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">00220v.jpg</div>
+          <div class="img-res">Low-Res</div>
+          green shift: (-1, 4) &bull; red shift: (-1, 10)
+        </div>
+      </div>
+
+      <div class="img-card">
+        <img src="./media/enhanced/00611v_aligned.jpg" alt="00611v custom aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">00611v.jpg</div>
+          <div class="img-res">Low-Res</div>
+          green shift: (0, 5) &bull; red shift: (-1, 11)
+        </div>
+      </div>
+
+      <div class="img-card">
+        <img src="./media/enhanced/00537v_aligned.jpg" alt="00537v custom aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">00537v.jpg</div>
+          <div class="img-res">Low-Res</div>
+          green shift: (3, 5) &bull; red shift: (4, 12)
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- BELLS & WHISTLES: COLOR BALANCING & CONTRAST -->
+  <!-- ============================================================ -->
+  <section id="bells-and-whistles">
+    <h2>Bells &amp; Whistles: Automatic Color Balancing &amp; Contrast Adjustment</h2>
+    <p>
+      Raw aligned composites often exhibit color casts and low contrast due to exposure variations across plates and chemical aging. We implemented a two-step post-processing enhancement pipeline:
+    </p>
+
+    <ol>
+      <li>
+        <strong>Interior Window Cropping:</strong> Statistics are computed on the central 80% interior (cropping a 10% margin on all sides) to prevent dark borders from skewing channel means or anchoring contrast percentiles.
+      </li>
+      <li>
+        <strong>Automatic White Balancing (Gray World):</strong> Assumes the average scene color is neutral gray. We compute the mean intensity of each channel ($\mu_r, \mu_g, \mu_b$) and scale each channel by $\mu_{\text{gray}} / \mu_c$ where $\mu_{\text{gray}} = (\mu_r + \mu_g + \mu_b) / 3$ to neutralize color casts.
+      </li>
+      <li>
+        <strong>Robust Contrast Stretching:</strong> Linearly rescales pixel values between the 1st and 99th percentiles of each channel to $[0.0, 1.0]$, expanding dynamic range while ignoring noise and hot pixels.
+      </li>
+    </ol>
+
+    <h3>Before &amp; After Comparisons</h3>
+
+    <h4>01657u.jpg</h4>
+    <div class="grid-2">
+      <div class="img-card">
+        <img src="./media/pyramid/01657u_aligned.jpg" alt="01657u Raw Aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">01657u.jpg (Raw)</div>
+        </div>
+      </div>
+
+      <div class="img-card">
+        <img src="./media/enhanced/01657u_enhanced.jpg" alt="01657u Auto-Enhanced" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">01657u.jpg (Enhanced)</div>
+        </div>
+      </div>
+    </div>
+
+    <h4>01047u.jpg</h4>
+    <div class="grid-2">
+      <div class="img-card">
+        <img src="./media/pyramid/01047u_aligned.jpg" alt="01047u Raw Aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">01047u.jpg (Raw)</div>
+        </div>
+      </div>
+
+      <div class="img-card">
+        <img src="./media/enhanced/01047u_enhanced.jpg" alt="01047u Auto-Enhanced" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">01047u.jpg (Enhanced)</div>
+        </div>
+      </div>
+    </div>
+
+    <h4>00125v.jpg</h4>
+    <div class="grid-2">
+      <div class="img-card">
+        <img src="./media/pyramid/00125v_aligned.jpg" alt="00125v Raw Aligned" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">00125v.jpg (Raw)</div>
+        </div>
+      </div>
+
+      <div class="img-card">
+        <img src="./media/enhanced/00125v_enhanced.jpg" alt="00125v Auto-Enhanced" loading="lazy">
+        <div class="img-caption">
+          <div class="img-title">00125v.jpg (Enhanced)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- COMMANDS TO REPRODUCE -->
+  <!-- ============================================================ -->
+  <section id="reproduce">
+    <h2>Commands to Reproduce Results</h2>
+    <p>
+      All results can be reproduced directly using <code>main.py</code>:
+    </p>
+    <pre><code># (Run from inside the 1/ directory)
+# 1. Single-scale baseline on all low-resolution (.v.jpg) images:
+python main.py --low-res single ncc
+
+# 2. Multi-scale pyramid alignment on all dataset and custom images:
+python main.py --all pyramid ncc
+
+# 3. Running an individual image:
+python main.py data/00125v.jpg single ncc
+python main.py data/00056v.jpg single ncc
+python main.py data/01164v.jpg single ncc
+python main.py data/00458u.jpg pyramid ncc
+
+# 4. Bells & Whistles: running with automatic white balance & contrast enhancement:
+python main.py data/01657u.jpg pyramid ncc --enhance
+python main.py --all pyramid ncc --enhance</code></pre>
+  </section>
+
+  <footer>
+    <p>Jerry Kang &bull; SYDE 671 &bull; University of Waterloo</p>
+  </footer>
+
+</body>
+
+</html>
