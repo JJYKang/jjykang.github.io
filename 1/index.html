@@ -148,13 +148,13 @@
   <section id="single-scale">
     <h2>Single-Scale Alignment Results</h2>
     <p>
-      <strong>Algorithm:</strong> For low-resolution plates (~400 px width), channel displacements are small (typically within &plusmn;15 pixels). The single-scale exhaustive search proceeds step-by-step:
+      <strong>Algorithm:</strong> For low-resolution images (~400 px), channel displacements are small, allowing a single-scale exhaustive search that proceeds step-by-step:
     </p>
     <ol>
-      <li><strong>Interior Window Cropping:</strong> Crop a 10% margin on all sides of the base channel to isolate the central 80% interior, avoiding dark borders and scanning artifacts.</li>
-      <li><strong>Search Grid Definition:</strong> Define an exhaustive grid over all candidate shifts $(dy, dx) \in [-15, 15] \times [-15, 15]$ (961 candidate offsets).</li>
-      <li><strong>Candidate Translation:</strong> For each candidate displacement $(dy, dx)$, roll the target channel using <code>np.roll</code> and extract the corresponding interior window.</li>
-      <li><strong>Metric Evaluation:</strong> Score the similarity between the base channel crop and the shifted target crop using Normalized Cross-Correlation (NCC).</li>
+      <li><strong>Interior Window Cropping:</strong> Crop a 10% margin on all sides of the base channel to cut the dark and light borders and isolate the central 80% interior.</li>
+      <li><strong>Search Grid Definition:</strong> Define an exhaustive grid over all candidate shifts $(dy, dx) \in [-15, 15] \times [-15, 15]$.</li>
+      <li><strong>Candidate Translation:</strong> For each candidate displacement $(dy, dx)$, roll the target channel using <code>np.roll</code> and crop the image borders.</li>
+      <li><strong>Metric Evaluation:</strong> Score the similarity between the base channel and the shifted target using Normalized Cross-Correlation (NCC).</li>
       <li><strong>Optimal Shift Selection:</strong> Track the maximum NCC score and return the $(dy, dx)$ displacement that yields the best alignment.</li>
     </ol>
     <p>
@@ -199,19 +199,19 @@
   <section id="pyramid">
     <h2>Multi-Scale Pyramid Alignment Results (All 18 Dataset Images)</h2>
     <p>
-      <strong>Algorithm:</strong> For high-resolution scans (~3700&times;3200 px per channel), displacements frequently
-      exceed 100 pixels, making exhaustive search computationally infeasible. We
-      implemented a recursive coarse-to-fine image pyramid:
+      <strong>Algorithm:</strong> For high-resolution images (~3200+ px), alignment evaluation is expensive and displacements can
+      be large, possibly exceeding 100 pixels. This makes exhaustive search computationally infeasible. We
+      implement a recursive coarse-to-fine image pyramid:
     </p>
     <ol>
-      <li><strong>Base Case:</strong> If either channel dimension is $\le 200$ pixels, execute single-scale exhaustive
+      <li><strong>Base Case:</strong> If either channel dimension is $\le 200$ pixels, use the single-scale exhaustive
         search over a $[-15, 15]$ window.</li>
       <li><strong>Downsampling:</strong> Otherwise, downsample base and target channels by a factor of 2 using bilinear
         interpolation (<code>cv2.resize</code>) and recursively call <code>align_pyramid</code>.</li>
-      <li><strong>Offset Scaling:</strong> Multiply the coarse displacement returned from the lower scale by 2
+      <li><strong>Offset Scaling:</strong> Multiply the shift returned from the lower scale by 2
         (<code>dy *= 2</code>, <code>dx *= 2</code>).</li>
-      <li><strong>Local Refinement:</strong> Pre-shift the target channel by the coarse estimate and search a small
-        $[-2, 2]$ refinement window to find residual adjustments $(\Delta y, \Delta x)$.</li>
+      <li><strong>Local Refinement:</strong> Shift the target channel by the coarse estimate and search a small
+        $[-2, 2]$ refinement window for final adjustments $(\Delta y, \Delta x)$.</li>
       <li><strong>Accumulation:</strong> Return the total accumulated displacement $(dy + \Delta y, dx + \Delta x)$.
       </li>
     </ol>
@@ -453,13 +453,15 @@
 
     <ol>
       <li>
-        <strong>Interior Window Cropping:</strong> Statistics are computed on the central 80% interior (cropping a 10% margin on all sides) to prevent dark borders from skewing channel means or anchoring contrast percentiles.
+        <strong>Automatic White Balancing (Gray World):</strong>
+        We first compute the mean intensity of each color channel, $\mu_r$, $\mu_g$, and $\mu_b$. Assuming the average scene color should be approximately neutral gray, we define
+        $\mu_{\text{gray}} = (\mu_r + \mu_g + \mu_b) / 3$
+        and scale each channel by $\mu_{\text{gray}} / \mu_c$. This reduces overall color casts by balancing the average intensity of the three channels.
       </li>
+    
       <li>
-        <strong>Automatic White Balancing (Gray World):</strong> Assumes the average scene color is neutral gray. We compute the mean intensity of each channel ($\mu_r, \mu_g, \mu_b$) and scale each channel by $\mu_{\text{gray}} / \mu_c$ where $\mu_{\text{gray}} = (\mu_r + \mu_g + \mu_b) / 3$ to neutralize color casts.
-      </li>
-      <li>
-        <strong>Robust Contrast Stretching:</strong> Linearly rescales pixel values between the 1st and 99th percentiles of each channel to $[0.0, 1.0]$, expanding dynamic range while ignoring noise and hot pixels.
+        <strong>Robust Contrast Stretching:</strong>
+        After white balancing, we compute the 1st and 99th intensity percentiles for each channel. We then linearly map this range to $[0,1]$ and clip values outside it. Using percentiles instead of the absolute minimum and maximum makes the adjustment less sensitive to extreme outliers while improving overall contrast.
       </li>
     </ol>
 
