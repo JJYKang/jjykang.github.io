@@ -10,9 +10,12 @@ The webpage stays in `index.html`, with `style.css` and `page.js` beside it, as 
   requirements.txt
   src/
     convolution.py           # reusable NumPy convolution functions
+    filters.py               # finite differences, magnitude, thresholding
   scripts/
     part1_1.py               # generate section 1.1 results
+    part1_2.py               # generate section 1.2 results
   data/
+    cameraman.png            # downloaded from the Berkeley assignment
     provided/
       syde671 assignment 2 hybrid/    # supplied folder, unchanged
       syde671 assn2 part 2 images/    # supplied folder, unchanged
@@ -20,6 +23,7 @@ The webpage stays in `index.html`, with `style.css` and `page.js` beside it, as 
   media/
     part1/
       1_1/                   # generated images, benchmarks, source snippets
+      1_2/                   # cameraman derivatives, magnitude, binary edges
 ```
 
 ## Adding the remaining sections
@@ -40,7 +44,7 @@ Add shared loading and export helpers in `src/image_io.py` when another section 
 
 Commit the generated assets used by the webpage so GitHub Pages needs no Python runtime. Keep benchmark data and generated code snippets beside their section's images. Section scripts resolve output paths from their own location, so they work from either the portfolio root or the A2 directory.
 
-## Run section 1.1
+## Run sections 1.1 and 1.2
 
 From inside `2/`:
 
@@ -48,8 +52,11 @@ From inside `2/`:
 pip install -r requirements.txt
 python scripts/part1_1.py
 python scripts/part1_1.py --image data/custom/selfie.jpg
+python scripts/part1_2.py --threshold 0.2
 ```
 
 From the portfolio root, prefix script paths with `2/`. The `--image` path is relative to the current working directory. Without it, section 1.1 uses the synthetic placeholder.
 
 `.deps/` and `.preview/` are ignored local working directories.
+
+Cameraman source: https://cal-cs180.github.io/fa24/hw/proj2/cameraman.png

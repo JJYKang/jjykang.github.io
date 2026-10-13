@@ -1,4 +1,7 @@
 'use strict';
+document.querySelectorAll('[data-edge-threshold]').forEach(element => {
+  element.textContent = window.finiteDifferenceData.threshold;
+});
 const { results, snippets } = window.convolutionData;
 document.querySelectorAll('[data-source]').forEach(element => {
   element.textContent = snippets[element.dataset.source];

@@ -6,6 +6,7 @@
   <title>SYDE 671 Assignment 2 &mdash; Jerry Kang</title>
   <link rel="stylesheet" href="./style.css">
   <script defer src="./media/part1/1_1/results.js"></script>
+  <script defer src="./media/part1/1_2/results.js"></script>
   <script defer src="./page.js"></script>
 </head>
 <body>
@@ -64,7 +65,38 @@ Dy = Dx.T</code></pre>
     <noscript><p>View <a href="./src/convolution.py">the code</a> and <a href="./media/part1/1_1/results.json">the saved measurements</a>.</p></noscript>
 
     <h3 id="finite-differences">Part 1.2: Finite Difference Operator</h3>
-    <!-- Results to be added. -->
+    <p>I convolved the grayscale cameraman image with <code>Dx = [[1, 0, -1]]</code> and its transpose <code>Dy</code> to compute the x and y partial derivatives. D<sub>x</sub> highlights vertical edges, while D<sub>y</sub> highlights horizontal edges.</p>
+    <p>The gradient magnitude combines both directions: <code>magnitude = np.sqrt(dx ** 2 + dy ** 2)</code>. An edge pixel is white when its magnitude is greater than the threshold, and black otherwise.</p>
+    <pre><code>dx = convolve2d(image, DX, mode="same", boundary="symm")
+dy = convolve2d(image, DY, mode="same", boundary="symm")
+magnitude = np.sqrt(dx ** 2 + dy ** 2)
+edges = magnitude > threshold</code></pre>
+    <p>The input intensities are scaled to [0, 1]. Symmetric boundary extension avoids a strong artificial edge from padding the image with black pixels. The derivative displays use [&minus;1, 1], with zero shown as gray. The magnitude display uses [0, &radic;2]; thresholding uses the raw magnitude before display scaling.</p>
+    <div class="grid-2">
+      <div class="img-card">
+        <img src="./media/part1/1_2/original.png" alt="Original grayscale cameraman image" loading="lazy">
+        <div class="img-caption"><div class="img-title">Cameraman</div>Original grayscale input.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part1/1_2/dx.png" alt="Signed x derivative of the cameraman image" loading="lazy">
+        <div class="img-caption"><div class="img-title">Partial Derivative in x</div>Vertical boundaries, including the tripod legs.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part1/1_2/dy.png" alt="Signed y derivative of the cameraman image" loading="lazy">
+        <div class="img-caption"><div class="img-title">Partial Derivative in y</div>Horizontal boundaries in the camera and background.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part1/1_2/magnitude.png" alt="Gradient magnitude of the cameraman image" loading="lazy">
+        <div class="img-caption"><div class="img-title">Gradient Magnitude</div>Edge strength across both directions.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part1/1_2/edges.png" alt="Thresholded binary edges of the cameraman image" loading="lazy">
+        <div class="img-caption"><div class="img-title">Binary Edge Image</div>Threshold: <span data-edge-threshold>0.2</span>.</div>
+      </div>
+    </div>
+    <h4>Threshold Selection</h4>
+    <p>I compared thresholds of 0.1, 0.2, and 0.3 and selected <span data-edge-threshold>0.2</span>. The lower threshold preserves more weak edges but leaves substantial texture in the grass and background. The higher threshold removes more texture but breaks weaker portions of the subject and tripod outlines. The selected threshold retains the main silhouette and camera/tripod boundaries while suppressing some background detail. Fine texture remains because the finite difference filters also respond to noise.</p>
+    <p>Input: <a href="https://cal-cs180.github.io/fa24/hw/proj2/cameraman.png">Berkeley assignment cameraman image</a>.</p>
     <h3 id="dog">Part 1.3: Derivative of Gaussian (DoG) Filter</h3>
     <!-- Results to be added. -->
     <h3 id="orientations">Bells &amp; Whistles: Gradient Orientations</h3>
@@ -93,10 +125,12 @@ Dy = Dx.T</code></pre>
     <p>Run from inside the <code>2/</code> directory:</p>
     <pre><code>pip install -r requirements.txt
 python scripts/part1_1.py
+python scripts/part1_2.py --threshold 0.2
 
 # Replace the placeholder with a photo:
 python scripts/part1_1.py --image data/custom/selfie.jpg</code></pre>
     <p><a href="./src/convolution.py">Convolution code</a> &bull; <a href="./scripts/part1_1.py">Result generation</a></p>
+    <p><a href="./src/filters.py">Finite difference code</a> &bull; <a href="./scripts/part1_2.py">Part 1.2 result generation</a></p>
   </section>
   <footer><p>Jerry Kang &bull; SYDE 671 &bull; University of Waterloo</p></footer>
 </body>
