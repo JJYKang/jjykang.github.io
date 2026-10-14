@@ -185,7 +185,25 @@ direct_dy = convolve2d(padded_image, dog_y, mode="same")</code></pre>
     </div>
     <p>Smoothing removes much of the grass texture and isolated responses visible in 1.2. The subject and tripod outlines become smoother and wider, while some fine camera details disappear. The Gaussian reduces gradient strengths, so I lowered the threshold rather than reusing 0.2. After comparing 0.05, 0.08, and 0.12, I selected <span data-dog-threshold>0.08</span>: 0.05 retains more background detail, while 0.12 removes weaker parts of the camera and tripod. The selected value keeps the main outlines with little grass texture.</p>
     <h3 id="orientations">Bells &amp; Whistles: Gradient Orientations</h3>
-    <!-- Results to be added. -->
+    <p>I used the smoothed DoG derivatives from 1.3 to compute the direction of the gradient at each pixel. The gradient points toward increasing intensity, perpendicular to the local edge. Image coordinates have x increasing to the right and y increasing downward, so angles increase clockwise from the positive x direction.</p>
+    <p>To calculate the angle without built-in angle functions, I first take the ratio of the smaller absolute derivative to the larger. This reduces the calculation to the first octant and avoids division by zero. I approximate its arctangent with a 12-term alternating series, using <code>atan(r) = pi/4 + atan((r - 1)/(r + 1))</code> for larger ratios to improve convergence. Finally, I restore the octant and quadrant using the relative magnitudes and signs of D<sub>x</sub> and D<sub>y</sub>. The result is in [0, 2&pi;); zero-gradient pixels are assigned zero and displayed as black.</p>
+    <p>In HSV color space, hue represents orientation over a full turn, saturation is one, and value represents gradient magnitude. I divide magnitude by its 99th percentile and clip to [0, 1] for display, making weaker edges visible while limiting the influence of the strongest responses. Bright colors show stronger gradients; dark regions have little intensity change.</p>
+    <pre><code>angle = gradient_orientation(dx, dy)  # manual series + quadrant correction
+magnitude = np.sqrt(dx ** 2 + dy ** 2)
+value = np.clip(magnitude / np.percentile(magnitude, 99), 0, 1)
+hsv = np.stack((angle * 180 / np.pi, np.ones_like(angle), value), axis=-1)
+rgb = cv2.cvtColor(hsv.astype(np.float32), cv2.COLOR_HSV2RGB)</code></pre>
+    <div class="grid-2">
+      <div class="img-card">
+        <img src="./media/part1/1_3/orientations.png" alt="Cameraman gradients colored by orientation, with brightness showing edge strength" loading="lazy">
+        <div class="img-caption"><div class="img-title">Gradient Orientations in HSV</div>Gaussian-smoothed gradients from 1.3; color shows direction and brightness shows strength.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part1/1_3/orientation_key.png" alt="Circular orientation key: right is red, down is yellow-green, left is cyan, and up is violet" loading="lazy">
+        <div class="img-caption"><div class="img-title">Orientation Color Key</div>Right: 0&deg; (red). Down: 90&deg; (yellow-green). Left: 180&deg; (cyan). Up: 270&deg; (violet).</div>
+      </div>
+    </div>
+    <p>Opposite sides of the tripod legs have different colors because their intensities change in opposite directions. The subject outline changes hue as its direction changes around the head and shoulders. Gaussian smoothing suppresses much of the fine grass texture, making the main directional patterns easier to see.</p>
   </section>
 
   <section id="part2">
@@ -217,7 +235,7 @@ python scripts/part1_3.py --size 9 --sigma 2 --threshold 0.08
 python scripts/part1_1.py --image data/custom/selfie.jpg</code></pre>
     <p><a href="./src/convolution.py">Convolution code</a> &bull; <a href="./scripts/part1_1.py">Result generation</a></p>
     <p><a href="./src/filters.py">Finite difference code</a> &bull; <a href="./scripts/part1_2.py">Part 1.2 result generation</a></p>
-    <p><a href="./src/filters.py">Gaussian and DoG code</a> &bull; <a href="./scripts/part1_3.py">Part 1.3 result generation</a></p>
+    <p><a href="./src/filters.py">Gaussian, DoG, and orientation code</a> &bull; <a href="./scripts/part1_3.py">Part 1.3 and orientation result generation</a></p>
   </section>
   <footer><p>Jerry Kang &bull; SYDE 671 &bull; University of Waterloo</p></footer>
 </body>

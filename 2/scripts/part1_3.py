@@ -13,7 +13,7 @@ sys.path.insert(0, str(ROOT / "src"))
 import numpy as np
 from PIL import Image
 from filters import (gaussian_kernel, derivative_gaussian_kernels, gaussian_derivatives,
-                     gradient_magnitude, binarize_edges)
+                     gradient_magnitude, binarize_edges, orientation_rgb)
 
 
 def main():
@@ -55,6 +55,16 @@ def main():
         if "kernel" in name:
             result = result.resize((result.width * 32, result.height * 32), Image.Resampling.NEAREST)
         result.save(out / f"{name}.png")
+    colors = orientation_rgb(direct_dx, direct_dy)
+    Image.fromarray(np.round(colors * 255).astype(np.uint8)).save(out / "orientations.png")
+    # Direction key uses the same angle calculation and HSV mapping as the image.
+    y, x = np.mgrid[-128:129, -128:129]
+    radius = np.sqrt(x ** 2 + y ** 2)
+    unit_x = np.divide(x, radius, out=np.zeros_like(radius), where=radius > 0)
+    unit_y = np.divide(y, radius, out=np.zeros_like(radius), where=radius > 0)
+    key = orientation_rgb(unit_x, unit_y, value_scale=1)
+    key[(radius > 120) | (radius < 45)] = 0
+    Image.fromarray(np.round(key * 255).astype(np.uint8)).save(out / "orientation_key.png")
     data = {"size": args.size, "sigma": args.sigma, "threshold": args.threshold, "errors": errors}
     (out / "results.js").write_text("window.dogData = " + json.dumps(data) + ";\n", encoding="utf-8")
     print(json.dumps(data, indent=2))

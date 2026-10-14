@@ -52,3 +52,40 @@ def gaussian_derivatives(image, gaussian):
     direct_dx = convolve2d(padded, dog_x, mode="same")[crop]
     direct_dy = convolve2d(padded, dog_y, mode="same")[crop]
     return blurred[crop], dx, dy, direct_dx, direct_dy
+
+
+def gradient_orientation(dx, dy):
+    """Angles in [0, 2*pi), computed without built-in angle functions.
+
+    Reduce to the first octant, approximate atan by its alternating series,
+    then restore the octant and quadrant. Image y increases downwards.
+    """
+    ax, ay = np.abs(dx), np.abs(dy)
+    largest = np.maximum(ax, ay)
+    ratio = np.divide(np.minimum(ax, ay), largest,
+                      out=np.zeros_like(largest), where=largest > 0)
+    # atan(r) = pi/4 + atan((r-1)/(r+1)) for larger ratios.
+    # This limits the series argument to abs(z) <= sqrt(2)-1.
+    reduced = ratio > np.sqrt(2) - 1
+    z = np.where(reduced, (ratio - 1) / (ratio + 1), ratio)
+    angle = np.zeros_like(z)
+    for n in range(12):
+        angle += (-1) ** n * z ** (2 * n + 1) / (2 * n + 1)
+    angle = np.where(reduced, np.pi / 4 + angle, angle)
+    angle = np.where(ay > ax, np.pi / 2 - angle, angle)
+    angle = np.where(dx < 0, np.pi - angle, angle)
+    angle = np.where(dy < 0, 2 * np.pi - angle, angle)
+    return np.where(largest > 0, angle % (2 * np.pi), 0)
+
+
+def orientation_rgb(dx, dy, value_scale=None):
+    """HSV: hue = orientation, saturation = 1, value = gradient strength."""
+    import cv2
+    angle = gradient_orientation(dx, dy)
+    magnitude = gradient_magnitude(dx, dy)
+    if value_scale is None:
+        value_scale = np.percentile(magnitude, 99)
+    value = np.clip(magnitude / value_scale, 0, 1) if value_scale > 0 else np.zeros_like(magnitude)
+    hsv = np.stack((angle * 180 / np.pi, np.ones_like(angle), value), axis=-1)
+    # OpenCV float HSV uses degrees for H and [0,1] for S and V.
+    return cv2.cvtColor(hsv.astype(np.float32), cv2.COLOR_HSV2RGB)

@@ -10,11 +10,11 @@ The webpage stays in `index.html`, with `style.css` and `page.js` beside it, as 
   requirements.txt
   src/
     convolution.py           # reusable NumPy convolution functions
-    filters.py               # finite differences, Gaussian/DoG, edges
+    filters.py               # finite differences, Gaussian/DoG, edges, orientations
   scripts/
     part1_1.py               # generate section 1.1 results
     part1_2.py               # generate section 1.2 results
-    part1_3.py               # generate section 1.3 results
+    part1_3.py               # generate section 1.3 and orientation results
   data/
     cameraman.png            # downloaded from the Berkeley assignment
     provided/
@@ -25,7 +25,7 @@ The webpage stays in `index.html`, with `style.css` and `page.js` beside it, as 
     part1/
       1_1/                   # generated images, benchmarks, source snippets
       1_2/                   # cameraman derivatives, magnitude, binary edges
-      1_3/                   # Gaussian/DoG kernels and filtered results
+      1_3/                   # Gaussian/DoG results and HSV orientations
 ```
 
 ## Adding the remaining sections
