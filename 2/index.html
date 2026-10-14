@@ -63,7 +63,7 @@ Dy = Dx.T</code></pre>
     </table></div>
     <p id="runtime-summary"></p>
     <p>The two-loop version reduces Python overhead for the box filter, while NumPy window operations cost more than the explicit loops for the small derivative kernels. SciPy runs the convolution in compiled code. All three methods use the same zero-filled boundaries.</p>
-    <noscript><p>View <a href="./src/convolution.py">the code</a> and <a href="./media/part1/1_1/results.json">the saved measurements</a>.</p></noscript>
+    <noscript><p>View <a href="./src/convolution.py">the convolution code</a>. Enable JavaScript to see the saved timings and code snippets.</p></noscript>
 
     <h3 id="finite-differences">Part 1.2: Finite Difference Operator</h3>
     <p>I convolved the grayscale cameraman image with <code>Dx = [[1, 0, -1]]</code> and its transpose <code>Dy</code> to compute the x and y partial derivatives. D<sub>x</sub> highlights vertical edges, while D<sub>y</sub> highlights horizontal edges.</p>
@@ -228,11 +228,8 @@ rgb = cv2.cvtColor(hsv.astype(np.float32), cv2.COLOR_HSV2RGB)</code></pre>
     <p>Run from inside the <code>2/</code> directory:</p>
     <pre><code>pip install -r requirements.txt
 python scripts/part1_1.py
-python scripts/part1_2.py --threshold 0.2
-python scripts/part1_3.py --size 9 --sigma 2 --threshold 0.08
-
-# Use a different photo:
-python scripts/part1_1.py --image data/custom/selfie.jpg</code></pre>
+python scripts/part1_2.py
+python scripts/part1_3.py</code></pre>
     <p><a href="./src/convolution.py">Convolution code</a> &bull; <a href="./scripts/part1_1.py">Result generation</a></p>
     <p><a href="./src/filters.py">Finite difference code</a> &bull; <a href="./scripts/part1_2.py">Part 1.2 result generation</a></p>
     <p><a href="./src/filters.py">Gaussian, DoG, and orientation code</a> &bull; <a href="./scripts/part1_3.py">Part 1.3 and orientation result generation</a></p>

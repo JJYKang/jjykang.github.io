@@ -53,12 +53,11 @@ From inside `2/`:
 ```sh
 pip install -r requirements.txt
 python scripts/part1_1.py
-python scripts/part1_1.py --image data/custom/selfie.jpg
-python scripts/part1_2.py --threshold 0.2
-python scripts/part1_3.py --size 9 --sigma 2 --threshold 0.08
+python scripts/part1_2.py
+python scripts/part1_3.py
 ```
 
-From the portfolio root, prefix script paths with `2/`. Section 1.1 defaults to `data/custom/selfie.jpg`, resolved from the A2 directory. An explicit `--image` path is relative to the current working directory.
+From the portfolio root, prefix script paths with `2/`. Section 1.1 reads `data/custom/selfie.jpg`; sections 1.2 and 1.3 read `data/cameraman.png`. The scripts use fixed assignment parameters, defined near the top of each file.
 
 `.deps/` and `.preview/` are ignored local working directories.
 
