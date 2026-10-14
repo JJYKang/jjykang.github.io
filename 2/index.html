@@ -34,12 +34,12 @@
     <pre><code>box = np.ones((9, 9)) / 81
 Dx = np.array([[1.0, 0.0, -1.0]])
 Dy = Dx.T</code></pre>
-    <p id="input-note">A grayscale placeholder is used until I add a photo of myself.</p>
+    <p>I converted my selfie to grayscale and resized it to a maximum dimension of 320 pixels before applying the filters.</p>
     <p>The results below use the two-loop implementation. Signed derivatives are displayed on a fixed [&minus;1, 1] scale, with zero shown as gray.</p>
     <div class="grid-2">
       <div class="img-card">
-        <img src="./media/part1/1_1/original.png" alt="Grayscale geometric placeholder">
-        <div class="img-caption"><div class="img-title" id="input-title">Grayscale Placeholder</div><span id="input-caption">Original input.</span></div>
+        <img src="./media/part1/1_1/original.png" alt="Selfie converted to grayscale">
+        <div class="img-caption"><div class="img-title">Grayscale Selfie</div><span id="input-caption">Original grayscale input.</span></div>
       </div>
       <div class="img-card">
         <img src="./media/part1/1_1/box_two_loops.png" alt="9 by 9 box filter result">
@@ -231,7 +231,7 @@ python scripts/part1_1.py
 python scripts/part1_2.py --threshold 0.2
 python scripts/part1_3.py --size 9 --sigma 2 --threshold 0.08
 
-# Replace the placeholder with a photo:
+# Use a different photo:
 python scripts/part1_1.py --image data/custom/selfie.jpg</code></pre>
     <p><a href="./src/convolution.py">Convolution code</a> &bull; <a href="./scripts/part1_1.py">Result generation</a></p>
     <p><a href="./src/filters.py">Finite difference code</a> &bull; <a href="./scripts/part1_2.py">Part 1.2 result generation</a></p>

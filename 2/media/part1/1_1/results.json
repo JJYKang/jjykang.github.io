@@ -1,8 +1,7 @@
 {
-  "placeholder": true,
   "shape": [
-    192,
-    192
+    320,
+    240
   ],
   "repeats": 3,
   "numpy": "2.5.4",
@@ -17,17 +16,17 @@
       "measurements": [
         {
           "implementation": "Four loops",
-          "milliseconds": 4907.846699934453,
-          "max_error": 1.6653345369377348e-15
+          "milliseconds": 3473.112100000435,
+          "max_error": 1.5543122344752192e-15
         },
         {
           "implementation": "Two loops",
-          "milliseconds": 219.2043997347355,
-          "max_error": 6.661338147750939e-16
+          "milliseconds": 490.1348000003054,
+          "max_error": 5.551115123125783e-16
         },
         {
           "implementation": "SciPy",
-          "milliseconds": 8.212899789214134,
+          "milliseconds": 16.56619999994291,
           "max_error": 0.0
         }
       ]
@@ -41,17 +40,17 @@
       "measurements": [
         {
           "implementation": "Four loops",
-          "milliseconds": 101.30810039117932,
+          "milliseconds": 265.0452000007135,
           "max_error": 0.0
         },
         {
           "implementation": "Two loops",
-          "milliseconds": 239.34759991243482,
+          "milliseconds": 464.384599999903,
           "max_error": 0.0
         },
         {
           "implementation": "SciPy",
-          "milliseconds": 0.7507000118494034,
+          "milliseconds": 1.8238999991808669,
           "max_error": 0.0
         }
       ]
@@ -65,17 +64,17 @@
       "measurements": [
         {
           "implementation": "Four loops",
-          "milliseconds": 119.27679972723126,
+          "milliseconds": 287.7100000005157,
           "max_error": 0.0
         },
         {
           "implementation": "Two loops",
-          "milliseconds": 306.13380018621683,
+          "milliseconds": 455.4009000003134,
           "max_error": 0.0
         },
         {
           "implementation": "SciPy",
-          "milliseconds": 1.6528996638953686,
+          "milliseconds": 2.8707999999824096,
           "max_error": 0.0
         }
       ]

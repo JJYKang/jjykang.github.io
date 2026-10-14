@@ -146,21 +146,6 @@ pre code {
   margin-bottom: 4px;
 }
 
-.placeholder {
-  height: 280px;
-  background: #f6f8fa;
-  border: 2px dashed #d1d5da;
-  border-radius: 4px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #6a737d;
-  font-size: 0.9em;
-  padding: 15px;
-  text-align: center;
-}
-
 /* Table */
 table {
   width: 100%;

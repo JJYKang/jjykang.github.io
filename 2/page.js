@@ -36,9 +36,4 @@ const box = results.records.find(record => record.filter === 'box').measurements
 const error = Math.max(...results.records.flatMap(record => record.measurements.map(item => item.max_error)));
 document.getElementById('runtime-summary').textContent =
   `All custom outputs agree with SciPy within ${error.toExponential(2)} maximum absolute error. For the box filter, the two-loop implementation takes ${(box[0].milliseconds / box[1].milliseconds).toFixed(1)}× less time than four loops; SciPy takes ${(box[1].milliseconds / box[2].milliseconds).toFixed(1)}× less time than two loops.`;
-if (!results.placeholder) {
-  document.getElementById('input-note').textContent = 'These results use the supplied photograph, converted to grayscale before filtering.';
-  document.getElementById('input-title').textContent = 'Grayscale photograph';
-  document.getElementById('input-caption').textContent = `${results.shape[1]}×${results.shape[0]} input.`;
-  document.querySelector('img').alt = 'Supplied photograph converted to grayscale';
-}
+document.getElementById('input-caption').textContent = `${results.shape[1]}×${results.shape[0]} grayscale input.`;

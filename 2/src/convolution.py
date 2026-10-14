@@ -1,4 +1,3 @@
-"""NumPy-only 2D convolution, with SciPy-compatible output alignment."""
 import numpy as np
 
 

@@ -58,7 +58,7 @@ python scripts/part1_2.py --threshold 0.2
 python scripts/part1_3.py --size 9 --sigma 2 --threshold 0.08
 ```
 
-From the portfolio root, prefix script paths with `2/`. The `--image` path is relative to the current working directory. Without it, section 1.1 uses the synthetic placeholder.
+From the portfolio root, prefix script paths with `2/`. Section 1.1 defaults to `data/custom/selfie.jpg`, resolved from the A2 directory. An explicit `--image` path is relative to the current working directory.
 
 `.deps/` and `.preview/` are ignored local working directories.
 
