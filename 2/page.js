@@ -1,4 +1,15 @@
 'use strict';
+const dog = window.dogData;
+for (const [attribute, value] of [['size', dog.size], ['width', dog.size + 2],
+  ['sigma', dog.sigma], ['threshold', dog.threshold]]) {
+  document.querySelectorAll(`[data-dog-${attribute}]`).forEach(element => {
+    element.textContent = value;
+  });
+}
+document.querySelectorAll('[data-dog-error]').forEach(element => {
+  const key = element.dataset.dogError;
+  element.textContent = key === 'different_edge_pixels' ? dog.errors[key] : dog.errors[key].toExponential(2);
+});
 document.querySelectorAll('[data-edge-threshold]').forEach(element => {
   element.textContent = window.finiteDifferenceData.threshold;
 });
