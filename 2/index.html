@@ -445,7 +445,122 @@ Dy = Dx.T</code></pre>
     </div>
     <p>The fine bands retain a narrow transition, while coarser bands blend over wider regions. Together they preserve fruit texture while smoothing the overall color and lighting transition.</p>
     <h3 id="blending">Part 2.4: Multiresolution Blending</h3>
-    <!-- Results and color comparison to be added. -->
+    <p>I reused the six-level Gaussian and Laplacian stacks from 2.3. At each level, a Gaussian-smoothed mask weights the two Laplacian bands: B<sub>i</sub> = M<sub>i</sub>L<sub>A,i</sub> + (1 &minus; M<sub>i</sub>)L<sub>B,i</sub>. Summing the weighted bands and the final low-pass residual reconstructs the blend. Fine details transition narrowly; coarse color and lighting transition more gradually.</p>
+    <p>The supplied apple/orange example and its band contributions are shown in <a href="#stacks">2.3</a>. The two custom blends below use curved, nonrectangular masks. White selects A and black selects B. Both use six levels, starting with &sigma; = 2 and doubling the blur scale at each level.</p>
+
+    <h4>Custom Blend 1: Iced + Hot Drink</h4>
+    <p>I matched the cup centers and heights with a uniform scale and translation, then cropped to shared content. A curved seam through the cups combines the iced drink on the left with the hot drink on the right, along with their day/night backgrounds.</p>
+    <div class="grid-2">
+      <div class="img-card">
+        <img src="./media/part2/2_4/drinks/input_a.png" alt="Input A: Iced Drink" loading="lazy">
+        <div class="img-caption"><div class="img-title">Input A: Iced Drink</div>Aligned and cropped.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_4/drinks/input_b.png" alt="Input B: Hot Drink" loading="lazy">
+        <div class="img-caption"><div class="img-title">Input B: Hot Drink</div>Cropped to the same canvas.</div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="img-card">
+        <img src="./media/part2/2_4/drinks/mask.png" alt="Curved Mask" loading="lazy">
+        <div class="img-caption"><div class="img-title">Curved Mask</div>White: iced drink. Black: hot drink.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_4/drinks/direct.png" alt="Direct Cut" loading="lazy">
+        <div class="img-caption"><div class="img-title">Direct Cut</div>The binary mask applied without multiresolution blending.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_4/drinks/grayscale.png" alt="Grayscale Blend" loading="lazy">
+        <div class="img-caption"><div class="img-title">Grayscale Blend</div>Same frequency weights; color removed.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_4/drinks/blend.png" alt="Color Multiresolution Blend" loading="lazy">
+        <div class="img-caption"><div class="img-title">Color Multiresolution Blend</div>Selected result.</div>
+      </div>
+    </div>
+    <p>The direct cut has an abrupt brightness change through the cup and background. Multiresolution blending softens that change while retaining the cup texture. The lids and printed designs still do not match geometrically, so their join remains visible.</p>
+    <p>Color helps distinguish the brown iced drink from the pale hot-drink cup and preserves the warm night lighting. The grayscale version keeps the shape and texture but loses these cues. I therefore retained RGB color in both inputs, applying the same spatial mask to every channel.</p>
+
+    <h4>Drink Blend: Laplacian Contributions</h4>
+    <p>Following Figure 10 of Burt and Adelson, the first three rows show masked bands at levels 0, 2, and 4. Columns show the iced-drink contribution, hot-drink contribution, and their sum. Gray represents zero, and each row uses one signed display scale. The last row sums all six levels, including the low-pass residual, to show the reconstructed masked inputs and final blend.</p>
+    <div class="grid-3">
+      <div class="img-card">
+        <img src="./media/part2/2_4/drinks/process_a.png" alt="(a) Iced drink contribution" loading="lazy">
+        <div class="img-caption"><div class="img-title">(a) Iced drink contribution</div>L0.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_4/drinks/process_b.png" alt="(b) Hot drink contribution" loading="lazy">
+        <div class="img-caption"><div class="img-title">(b) Hot drink contribution</div>L0.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_4/drinks/process_c.png" alt="(c) Combined band" loading="lazy">
+        <div class="img-caption"><div class="img-title">(c) Combined band</div>L0.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_4/drinks/process_d.png" alt="(d) Iced drink contribution" loading="lazy">
+        <div class="img-caption"><div class="img-title">(d) Iced drink contribution</div>L2.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_4/drinks/process_e.png" alt="(e) Hot drink contribution" loading="lazy">
+        <div class="img-caption"><div class="img-title">(e) Hot drink contribution</div>L2.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_4/drinks/process_f.png" alt="(f) Combined band" loading="lazy">
+        <div class="img-caption"><div class="img-title">(f) Combined band</div>L2.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_4/drinks/process_g.png" alt="(g) Iced drink contribution" loading="lazy">
+        <div class="img-caption"><div class="img-title">(g) Iced drink contribution</div>L4.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_4/drinks/process_h.png" alt="(h) Hot drink contribution" loading="lazy">
+        <div class="img-caption"><div class="img-title">(h) Hot drink contribution</div>L4.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_4/drinks/process_i.png" alt="(i) Combined band" loading="lazy">
+        <div class="img-caption"><div class="img-title">(i) Combined band</div>L4.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_4/drinks/process_j.png" alt="(j) Summed iced drink contribution" loading="lazy">
+        <div class="img-caption"><div class="img-title">(j) Summed iced drink contribution</div>All bands plus the residual.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_4/drinks/process_k.png" alt="(k) Summed hot drink contribution" loading="lazy">
+        <div class="img-caption"><div class="img-title">(k) Summed hot drink contribution</div>All bands plus the residual.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_4/drinks/process_l.png" alt="(l) Reconstructed blend" loading="lazy">
+        <div class="img-caption"><div class="img-title">(l) Reconstructed blend</div>All bands plus the residual.</div>
+      </div>
+    </div>
+
+    <h4>Custom Blend 2: Coast + Mountains</h4>
+    <p>I resized the inputs without stretching and center-cropped the taller image to the same canvas. A curved seam between the two people retains the coast on the left and the forested mountain scene on the right.</p>
+    <div class="grid-2">
+      <div class="img-card">
+        <img src="./media/part2/2_4/landscapes/input_a.png" alt="Input A: Coast" loading="lazy">
+        <div class="img-caption"><div class="img-title">Input A: Coast</div></div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_4/landscapes/input_b.png" alt="Input B: Mountains" loading="lazy">
+        <div class="img-caption"><div class="img-title">Input B: Mountains</div></div>
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="img-card">
+        <img src="./media/part2/2_4/landscapes/mask.png" alt="Curved Mask" loading="lazy">
+        <div class="img-caption"><div class="img-title">Curved Mask</div></div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_4/landscapes/direct.png" alt="Direct Cut" loading="lazy">
+        <div class="img-caption"><div class="img-title">Direct Cut</div></div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_4/landscapes/blend.png" alt="Color Multiresolution Blend" loading="lazy">
+        <div class="img-caption"><div class="img-title">Color Multiresolution Blend</div></div>
+      </div>
+    </div>
+    <p>The multiresolution result softens the sky and ground transition while preserving both people. Ocean blue and forest green retain the identity of each location. The horizons and terrain do not correspond, so the result is a deliberately mixed landscape rather than a seamless panorama; blending alone cannot correct that geometry.</p>
   </section>
 
   <section id="reflection">
@@ -462,13 +577,15 @@ python scripts/part1_2.py
 python scripts/part1_3.py
 python scripts/part2_1.py
 python scripts/part2_2.py
-python scripts/part2_3.py</code></pre>
+python scripts/part2_3.py
+python scripts/part2_4.py</code></pre>
     <p><a href="./src/convolution.py">Convolution code</a> &bull; <a href="./scripts/part1_1.py">Result generation</a></p>
     <p><a href="./src/filters.py">Finite difference code</a> &bull; <a href="./scripts/part1_2.py">Part 1.2 result generation</a></p>
     <p><a href="./src/filters.py">Gaussian, DoG, and orientation code</a> &bull; <a href="./scripts/part1_3.py">Part 1.3 and orientation result generation</a></p>
     <p><a href="./src/filters.py">Unsharp masking code</a> &bull; <a href="./scripts/part2_1.py">Part 2.1 result generation</a></p>
     <p><a href="./src/hybrid.py">Alignment and hybrid image code</a> &bull; <a href="./scripts/part2_2.py">Part 2.2 result generation</a></p>
     <p><a href="./src/stacks.py">Gaussian and Laplacian stack code</a> &bull; <a href="./scripts/part2_3.py">Part 2.3 result generation</a></p>
+    <p><a href="./src/blending.py">Multiresolution blending code</a> &bull; <a href="./scripts/part2_4.py">Part 2.4 result generation</a></p>
   </section>
   <footer><p>Jerry Kang &bull; SYDE 671 &bull; University of Waterloo</p></footer>
 </body>
