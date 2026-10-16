@@ -12,12 +12,14 @@ The webpage stays in `index.html`, with `style.css` and `page.js` beside it, as 
     convolution.py           # reusable NumPy convolution functions
     filters.py               # finite differences, Gaussian/DoG, edges, orientations
     hybrid.py                # landmark alignment and hybrid filtering
+    stacks.py                # Gaussian and Laplacian stacks
   scripts/
     part1_1.py               # generate section 1.1 results
     part1_2.py               # generate section 1.2 results
     part1_3.py               # generate section 1.3 and orientation results
     part2_1.py               # generate sharpening and blur-recovery results
     part2_2.py               # generate three hybrids and frequency/color analysis
+    part2_3.py               # generate fruit stacks and Figure 3.42 panels
   data/
     cameraman.png            # downloaded from the Berkeley assignment
     provided/
@@ -32,6 +34,7 @@ The webpage stays in `index.html`, with `style.css` and `page.js` beside it, as 
     part2/
       2_1/                   # Taj Mahal and custom sharpening results
       2_2/                   # Derek/Nutmeg and two custom hybrids
+      2_3/                   # fruit stack sheets and panels (a)-(l)
 ```
 
 ## Adding the remaining sections
@@ -63,6 +66,7 @@ python scripts/part1_2.py
 python scripts/part1_3.py
 python scripts/part2_1.py
 python scripts/part2_2.py
+python scripts/part2_3.py
 ```
 
 From the portfolio root, prefix script paths with `2/`. Section 1.1 reads `data/custom/selfie.jpg`; sections 1.2 and 1.3 read `data/cameraman.png`. The scripts use fixed assignment parameters, defined near the top of each file.
@@ -70,6 +74,8 @@ From the portfolio root, prefix script paths with `2/`. Section 1.1 reads `data/
 Section 2.1 reads the supplied `taj.jpg` in its original folder and `data/custom/sharp.jpg`. It uses a 9x9 Gaussian (sigma 2), sharpening amounts 1, 2, and 4 for the Taj, and amount 2 for the custom photo and blur-recovery experiment.
 
 Section 2.2 reads Derek/Nutmeg from their original supplied folder and `pair1_A.jpg`, `pair1_B.jpg`, `pair2_A.jpg`, and `pair2_B.jpg` from `data/custom/`. Landmark coordinates, overlap crops, and Gaussian scales are fixed in `scripts/part2_2.py`. Coordinates refer to inputs resized to a maximum dimension of 512 pixels. Pair 1 includes the full process, five Fourier spectra, and four color variants.
+
+Section 2.3 reads `burt_apple.png` and `burt_orange.png` from their original supplied folder. It builds six levels at 480x344 without downsampling. Incremental Gaussian sigmas are 2, 4, 8, 16, and 32. The outputs include both fruit stacks and a stack-based version of Figure 3.42, using a Gaussian left/right mask stack.
 
 `.deps/` and `.preview/` are ignored local working directories.
 

@@ -360,7 +360,90 @@ Dy = Dx.T</code></pre>
     </div>
     <p>This is the weaker result: the squirrel's profile and foliage remain visible near the cat's frontal face. Reducing the image size favors the cat's overall shape, but the pose and background differences make the switch less convincing than in the eye-aligned face pairs.</p>
     <h3 id="stacks">Part 2.3: Gaussian and Laplacian Stacks</h3>
-    <!-- Results to be added. -->
+    <p>I built six-level stacks for the supplied apple and orange. Each input is resized once to 480&times;344 pixels; every computed stack level keeps that resolution. No pyramid functions or downsampling are used.</p>
+    <p>G<sub>0</sub> is the original. Each subsequent Gaussian level blurs the preceding level with &sigma; = 2, 4, 8, 16, and 32. I construct the 1D Gaussian kernels and convolve along rows and columns separately, using symmetric boundaries. This progressively removes finer frequencies without changing image size.</p>
+    <h4>Gaussian Stacks</h4>
+    <div class="stack-sheet">
+      <div class="img-card">
+        <img src="./media/part2/2_3/apple_gaussian.png" alt="Apple Gaussian Stack" loading="lazy">
+        <div class="img-caption"><div class="img-title">Apple Gaussian Stack</div>G0&ndash;G5, from the original to the coarsest blur.</div>
+      </div>
+    </div>
+    <div class="stack-sheet">
+      <div class="img-card">
+        <img src="./media/part2/2_3/orange_gaussian.png" alt="Orange Gaussian Stack" loading="lazy">
+        <div class="img-caption"><div class="img-title">Orange Gaussian Stack</div>G0&ndash;G5, from the original to the coarsest blur.</div>
+      </div>
+    </div>
+    <h4>Laplacian Stacks</h4>
+    <p>Each band is L<sub>i</sub> = G<sub>i</sub> &minus; G<sub>i+1</sub>. The final level stores G<sub>5</sub> as the low-pass residual, so summing all six levels reconstructs the original. Fine bands show surface texture and sharp boundaries; coarser bands show broader edges and shading.</p>
+    <p>The signed bands use one shared display scale across both fruits, with zero shown as gray. The final residual uses normal RGB intensities. Panel thumbnails are resized only for display.</p>
+    <div class="stack-sheet">
+      <div class="img-card">
+        <img src="./media/part2/2_3/apple_laplacian.png" alt="Apple Laplacian Stack" loading="lazy">
+        <div class="img-caption"><div class="img-title">Apple Laplacian Stack</div>L0&ndash;L4 are frequency bands; L5 is the low-pass residual.</div>
+      </div>
+    </div>
+    <div class="stack-sheet">
+      <div class="img-card">
+        <img src="./media/part2/2_3/orange_laplacian.png" alt="Orange Laplacian Stack" loading="lazy">
+        <div class="img-caption"><div class="img-title">Orange Laplacian Stack</div>L0&ndash;L4 are frequency bands; L5 is the low-pass residual.</div>
+      </div>
+    </div>
+    <h4>Figure 3.42 (a)&ndash;(l): Stack Version</h4>
+    <p>I made a left/right mask and a Gaussian stack of that mask using the same blur scales. At each level, the apple contribution is M<sub>i</sub>L<sub>apple,i</sub> and the orange contribution is (1 &minus; M<sub>i</sub>)L<sub>orange,i</sub>. Adding them gives a combined band; summing all bands, including the residual, gives the oraple.</p>
+    <p>As in the reference figure, the first three rows show levels 0, 2, and 4: apple contribution, orange contribution, and their sum. Each row uses a shared signed display scale. The final row sums all six levels for each column. This uses full-resolution stacks in place of the reference's pyramids.</p>
+    <div class="grid-3">
+      <div class="img-card">
+        <img src="./media/part2/2_3/figure_a.png" alt="(a) Apple contribution" loading="lazy">
+        <div class="img-caption"><div class="img-title">(a) Apple contribution</div>Fine band, L0.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_3/figure_b.png" alt="(b) Orange contribution" loading="lazy">
+        <div class="img-caption"><div class="img-title">(b) Orange contribution</div>Fine band, L0.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_3/figure_c.png" alt="(c) Combined band" loading="lazy">
+        <div class="img-caption"><div class="img-title">(c) Combined band</div>Fine band, L0.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_3/figure_d.png" alt="(d) Apple contribution" loading="lazy">
+        <div class="img-caption"><div class="img-title">(d) Apple contribution</div>Medium band, L2.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_3/figure_e.png" alt="(e) Orange contribution" loading="lazy">
+        <div class="img-caption"><div class="img-title">(e) Orange contribution</div>Medium band, L2.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_3/figure_f.png" alt="(f) Combined band" loading="lazy">
+        <div class="img-caption"><div class="img-title">(f) Combined band</div>Medium band, L2.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_3/figure_g.png" alt="(g) Apple contribution" loading="lazy">
+        <div class="img-caption"><div class="img-title">(g) Apple contribution</div>Coarse band, L4.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_3/figure_h.png" alt="(h) Orange contribution" loading="lazy">
+        <div class="img-caption"><div class="img-title">(h) Orange contribution</div>Coarse band, L4.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_3/figure_i.png" alt="(i) Combined band" loading="lazy">
+        <div class="img-caption"><div class="img-title">(i) Combined band</div>Coarse band, L4.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_3/figure_j.png" alt="(j) Summed apple contribution" loading="lazy">
+        <div class="img-caption"><div class="img-title">(j) Summed apple contribution</div>All bands plus the low-pass residual.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_3/figure_k.png" alt="(k) Summed orange contribution" loading="lazy">
+        <div class="img-caption"><div class="img-title">(k) Summed orange contribution</div>All bands plus the low-pass residual.</div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part2/2_3/figure_l.png" alt="(l) Oraple" loading="lazy">
+        <div class="img-caption"><div class="img-title">(l) Oraple</div>All bands plus the low-pass residual.</div>
+      </div>
+    </div>
+    <p>The fine bands retain a narrow transition, while coarser bands blend over wider regions. Together they preserve fruit texture while smoothing the overall color and lighting transition.</p>
     <h3 id="blending">Part 2.4: Multiresolution Blending</h3>
     <!-- Results and color comparison to be added. -->
   </section>
@@ -378,12 +461,14 @@ python scripts/part1_1.py
 python scripts/part1_2.py
 python scripts/part1_3.py
 python scripts/part2_1.py
-python scripts/part2_2.py</code></pre>
+python scripts/part2_2.py
+python scripts/part2_3.py</code></pre>
     <p><a href="./src/convolution.py">Convolution code</a> &bull; <a href="./scripts/part1_1.py">Result generation</a></p>
     <p><a href="./src/filters.py">Finite difference code</a> &bull; <a href="./scripts/part1_2.py">Part 1.2 result generation</a></p>
     <p><a href="./src/filters.py">Gaussian, DoG, and orientation code</a> &bull; <a href="./scripts/part1_3.py">Part 1.3 and orientation result generation</a></p>
     <p><a href="./src/filters.py">Unsharp masking code</a> &bull; <a href="./scripts/part2_1.py">Part 2.1 result generation</a></p>
     <p><a href="./src/hybrid.py">Alignment and hybrid image code</a> &bull; <a href="./scripts/part2_2.py">Part 2.2 result generation</a></p>
+    <p><a href="./src/stacks.py">Gaussian and Laplacian stack code</a> &bull; <a href="./scripts/part2_3.py">Part 2.3 result generation</a></p>
   </section>
   <footer><p>Jerry Kang &bull; SYDE 671 &bull; University of Waterloo</p></footer>
 </body>
