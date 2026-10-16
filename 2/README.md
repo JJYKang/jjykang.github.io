@@ -11,11 +11,13 @@ The webpage stays in `index.html`, with `style.css` and `page.js` beside it, as 
   src/
     convolution.py           # reusable NumPy convolution functions
     filters.py               # finite differences, Gaussian/DoG, edges, orientations
+    hybrid.py                # landmark alignment and hybrid filtering
   scripts/
     part1_1.py               # generate section 1.1 results
     part1_2.py               # generate section 1.2 results
     part1_3.py               # generate section 1.3 and orientation results
     part2_1.py               # generate sharpening and blur-recovery results
+    part2_2.py               # generate three hybrids and frequency/color analysis
   data/
     cameraman.png            # downloaded from the Berkeley assignment
     provided/
@@ -29,6 +31,7 @@ The webpage stays in `index.html`, with `style.css` and `page.js` beside it, as 
       1_3/                   # Gaussian/DoG results and HSV orientations
     part2/
       2_1/                   # Taj Mahal and custom sharpening results
+      2_2/                   # Derek/Nutmeg and two custom hybrids
 ```
 
 ## Adding the remaining sections
@@ -59,11 +62,14 @@ python scripts/part1_1.py
 python scripts/part1_2.py
 python scripts/part1_3.py
 python scripts/part2_1.py
+python scripts/part2_2.py
 ```
 
 From the portfolio root, prefix script paths with `2/`. Section 1.1 reads `data/custom/selfie.jpg`; sections 1.2 and 1.3 read `data/cameraman.png`. The scripts use fixed assignment parameters, defined near the top of each file.
 
 Section 2.1 reads the supplied `taj.jpg` in its original folder and `data/custom/sharp.jpg`. It uses a 9x9 Gaussian (sigma 2), sharpening amounts 1, 2, and 4 for the Taj, and amount 2 for the custom photo and blur-recovery experiment.
+
+Section 2.2 reads Derek/Nutmeg from their original supplied folder and `pair1_A.jpg`, `pair1_B.jpg`, `pair2_A.jpg`, and `pair2_B.jpg` from `data/custom/`. Landmark coordinates, overlap crops, and Gaussian scales are fixed in `scripts/part2_2.py`. Coordinates refer to inputs resized to a maximum dimension of 512 pixels. Pair 1 includes the full process, five Fourier spectra, and four color variants.
 
 `.deps/` and `.preview/` are ignored local working directories.
 
