@@ -12,7 +12,7 @@ import numpy as np
 from PIL import Image, ImageOps
 from scipy.signal import convolve2d
 import scipy
-from convolution import _prepare, zero_pad, convolve_four_loops, convolve_two_loops, DX, DY
+from convolution import _prepare, zero_pad, convolve_four_loops, convolve_two_loops
 
 REPEATS = 3
 
@@ -23,7 +23,6 @@ def save_gray(array, path, signed=False):
 
 
 def main():
-    # Orient, grayscale, and resize the selfie for the loop comparison.
     with Image.open(ROOT / "data" / "custom" / "selfie.jpg") as source:
         source = ImageOps.exif_transpose(source).convert("L")
         source.thumbnail((320, 320))
@@ -35,6 +34,8 @@ def main():
     # Compare both implementations and SciPy for each required filter.
     records = []
     box = np.ones((9, 9)) / 81
+    DX = np.array([[1.0, 0.0, -1.0]])
+    DY = DX.T.copy()
     for name, kernel in [("box", box), ("dx", DX), ("dy", DY)]:
         reference = convolve2d(image, kernel, mode="same", boundary="fill", fillvalue=0)
         record = {"filter": name, "kernel": list(kernel.shape), "measurements": []}

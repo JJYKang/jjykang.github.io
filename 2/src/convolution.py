@@ -39,7 +39,3 @@ def convolve_two_loops(image, kernel):
             window = padded[y:y + kh, x:x + kw]
             output[y, x] = np.sum(window * flipped)
     return output
-
-# Finite differences along columns and rows.
-DX = np.array([[1.0, 0.0, -1.0]])
-DY = DX.T.copy()

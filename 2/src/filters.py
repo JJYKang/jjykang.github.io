@@ -1,7 +1,10 @@
-"""Finite differences and Gaussian derivatives for Parts 1.2 and 1.3."""
+"""Spatial filters, gradients, and unsharp masking."""
 import numpy as np
 from scipy.signal import convolve2d
-from convolution import DX, DY
+
+# Finite differences along columns and rows.
+DX = np.array([[1.0, 0.0, -1.0]])
+DY = DX.T.copy()
 
 
 def finite_differences(image):
@@ -88,3 +91,17 @@ def orientation_rgb(dx, dy, value_scale=None):
     # Float HSV uses degrees for hue and [0, 1] for saturation/value.
     hsv = np.stack((angle * 180 / np.pi, np.ones_like(angle), value), axis=-1)
     return cv2.cvtColor(hsv.astype(np.float32), cv2.COLOR_HSV2RGB)
+
+
+def filter_rgb(image, kernel):
+    """Apply a spatial kernel independently to each color channel."""
+    return np.stack([convolve2d(image[:, :, c], kernel, mode="same", boundary="symm")
+                     for c in range(3)], axis=-1)
+
+
+def unsharp_mask(image, gaussian, amount):
+    """Sharpen with the single kernel (1 + amount) * impulse - amount * G."""
+    kernel = -amount * gaussian.copy()
+    # The center impulse preserves the original image contribution.
+    kernel[kernel.shape[0] // 2, kernel.shape[1] // 2] += 1 + amount
+    return filter_rgb(image, kernel)

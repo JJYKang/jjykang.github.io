@@ -15,6 +15,7 @@ The webpage stays in `index.html`, with `style.css` and `page.js` beside it, as 
     part1_1.py               # generate section 1.1 results
     part1_2.py               # generate section 1.2 results
     part1_3.py               # generate section 1.3 and orientation results
+    part2_1.py               # generate sharpening and blur-recovery results
   data/
     cameraman.png            # downloaded from the Berkeley assignment
     provided/
@@ -26,6 +27,8 @@ The webpage stays in `index.html`, with `style.css` and `page.js` beside it, as 
       1_1/                   # generated images, benchmarks, source snippets
       1_2/                   # cameraman derivatives, magnitude, binary edges
       1_3/                   # Gaussian/DoG results and HSV orientations
+    part2/
+      2_1/                   # Taj Mahal and custom sharpening results
 ```
 
 ## Adding the remaining sections
@@ -46,7 +49,7 @@ Add shared loading and export helpers in `src/image_io.py` when another section 
 
 Commit the generated assets used by the webpage so GitHub Pages needs no Python runtime. Keep benchmark data and generated code snippets beside their section's images. Section scripts resolve output paths from their own location, so they work from either the portfolio root or the A2 directory.
 
-## Run sections 1.1, 1.2, and 1.3
+## Generate results
 
 From inside `2/`:
 
@@ -55,9 +58,12 @@ pip install -r requirements.txt
 python scripts/part1_1.py
 python scripts/part1_2.py
 python scripts/part1_3.py
+python scripts/part2_1.py
 ```
 
 From the portfolio root, prefix script paths with `2/`. Section 1.1 reads `data/custom/selfie.jpg`; sections 1.2 and 1.3 read `data/cameraman.png`. The scripts use fixed assignment parameters, defined near the top of each file.
+
+Section 2.1 reads the supplied `taj.jpg` in its original folder and `data/custom/sharp.jpg`. It uses a 9x9 Gaussian (sigma 2), sharpening amounts 1, 2, and 4 for the Taj, and amount 2 for the custom photo and blur-recovery experiment.
 
 `.deps/` and `.preview/` are ignored local working directories.
 
