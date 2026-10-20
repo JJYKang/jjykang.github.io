@@ -63,15 +63,9 @@ def gradient_orientation(dx, dy):
     largest = np.maximum(ax, ay)
     ratio = np.divide(np.minimum(ax, ay), largest,
                       out=np.zeros_like(largest), where=largest > 0)
-    # Reduce large ratios so the atan series converges quickly.
-    reduced = ratio > np.sqrt(2) - 1
-    z = np.where(reduced, (ratio - 1) / (ratio + 1), ratio)
-    # Approximate atan(z) with 12 alternating terms.
-    angle = np.zeros_like(z)
-    for n in range(12):
-        angle += (-1) ** n * z ** (2 * n + 1) / (2 * n + 1)
-    # Restore the angle offset, octant, and quadrant.
-    angle = np.where(reduced, np.pi / 4 + angle, angle)
+    # Approximate atan on [0, 1]; the correction improves a linear estimate.
+    angle = ratio * (np.pi / 4 + 0.273 * (1 - ratio))
+    # Restore the octant and quadrant.
     angle = np.where(ay > ax, np.pi / 2 - angle, angle)
     angle = np.where(dx < 0, np.pi - angle, angle)
     angle = np.where(dy < 0, 2 * np.pi - angle, angle)

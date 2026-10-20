@@ -40,10 +40,7 @@ def main():
     dog_scale = max(np.max(np.abs(dog_x)), np.max(np.abs(dog_y)))
     displays = {"blurred": blurred, "dx": 0.5 + dx / 2, "dy": 0.5 + dy / 2,
                 "magnitude": magnitude / np.sqrt(2), "edges": edges.astype(float),
-                "dog_dx": 0.5 + direct_dx / 2, "dog_dy": 0.5 + direct_dy / 2,
                 "dog_magnitude": direct_magnitude / np.sqrt(2),
-                "dog_edges": direct_edges.astype(float),
-                "gaussian_kernel": gaussian / gaussian.max(),
                 "dog_kernel_x": 0.5 + dog_x / (2 * dog_scale),
                 "dog_kernel_y": 0.5 + dog_y / (2 * dog_scale)}
     for name, display in displays.items():
