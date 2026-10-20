@@ -146,7 +146,7 @@ Dy = Dx.T</code></pre>
         <div class="img-caption"><div class="img-title">DoG Gradient Magnitude</div></div>
       </div>
     </div>
-    <p>To check whether combining the filters changes the result, both approaches use the same padded input and crop back to the original size only after filtering. This avoids differences caused by handling the intermediate blur's border separately.</p>
+    <p>To check whether combining the filters changes the result, both approaches use the same symmetrically padded input and crop back to the original size only after filtering. The padding covers the reach of both filters, so neither approach uses the artificial outer boundary. Cropping and padding again between the two stages would change the boundary values and could make otherwise equivalent filters disagree near the edges.</p>
     <p>The largest differences are <span data-dog-error="dx"></span> for x, <span data-dog-error="dy"></span> for y, and <span data-dog-error="magnitude"></span> for magnitude. These are at floating-point rounding level, and the binary edge images differ at <span data-dog-error="different_edge_pixels"></span> pixels. The combined filters therefore reproduce the two-step result in this comparison.</p>
 
     <h4>Comparison with the Finite Difference Method</h4>
@@ -164,7 +164,8 @@ Dy = Dx.T</code></pre>
     <h3 id="orientations">Bells &amp; Whistles: Gradient Orientations</h3>
     <ol>
       <li><strong>Calculate direction:</strong> Use the smoothed x/y derivatives from 1.3. Divide the smaller derivative magnitude by the larger so only an angle between 0&deg; and 45&deg; needs to be approximated. Skip the division where both derivatives are zero.</li>
-      <li><strong>Approximate the angle:</strong> Use a 12-term arctangent series, reducing larger ratios first so the series converges quickly. Recover the full direction from the derivative signs and which derivative was larger. This avoids using a built-in angle function.</li>
+      <li><strong>Approximate the angle:</strong> Use a 12-term alternating arctangent series. For ratios above tan(22.5&deg;), replace the ratio r with (r &minus; 1)/(r + 1), then add 45&deg; back after the approximation. This keeps the series input small enough to converge quickly.</li>
+      <li><strong>Recover the direction:</strong> If the y derivative has the larger magnitude, subtract the angle from 90&deg;. Use the signs of the x and y derivatives to place it in the correct quadrant, then wrap it to a full turn. No built-in angle function is needed.</li>
       <li><strong>Assign colors:</strong> Map the resulting direction to hue, keep saturation at one, and use gradient magnitude for brightness. Weak responses stay dark so flat areas do not compete with the visible edges.</li>
     </ol>
 
@@ -258,7 +259,7 @@ Dy = Dx.T</code></pre>
     <p>The stronger edges make the result look less blurry, but the fine fur texture does not return to its original appearance. This was a useful limit of the method: sharpening can emphasize what remains after blurring, but it is not an inverse of the blur.</p>
     <h3 id="hybrids">Part 2.2: Hybrid Images</h3>
     <ol>
-      <li><strong>Align:</strong> Select two matching landmarks, then use their spacing and direction to determine scale, rotation, and translation. Crop both images to their shared content.</li>
+      <li><strong>Align:</strong> Select two matching landmarks in each image. Scale the second image to match the landmark spacing, rotate to match the line between them, and translate to bring the landmarks together. Resample with bilinear interpolation, without a separate anti-alias filter, then crop both images to an area with valid content from each.</li>
       <li><strong>Keep the broad structure:</strong> Gaussian-blur the first image to retain its low frequencies.</li>
       <li><strong>Keep the detail:</strong> Subtract a Gaussian-blurred copy from the second image to retain its high frequencies.</li>
       <li><strong>Combine:</strong> Add the two filtered images. Check the result close up and at a smaller viewing size, adjusting the blur scales if either source overwhelms the other.</li>
@@ -282,7 +283,7 @@ Dy = Dx.T</code></pre>
     </div>
 
     <h4>Custom Pair 1: Person + Dog</h4>
-    <p>The person/dog pair is used for the detailed analysis because the two eye positions can be matched reasonably well. The person's face provides the broad structure, while the dog's fur supplies the detail. The different nose and mouth shapes are still a limitation of the alignment.</p>
+    <p>The person/dog pair is used for the detailed analysis because the two eye positions can be matched reasonably well. The person's face provides the broad structure, while the dog's fur supplies the detail. Matching the eyes does not match the different nose and mouth shapes: the alignment scales and rotates the whole image, so it cannot adjust individual facial features.</p>
     <div class="grid-2">
       <div class="img-card">
         <img src="./media/part2/2_2/pair1/original_a.png" alt="Original A: Person" loading="lazy">
@@ -382,7 +383,7 @@ Dy = Dx.T</code></pre>
     <h3 id="stacks">Part 2.3: Gaussian and Laplacian Stacks</h3>
     <ol>
       <li><strong>Gaussian stack:</strong> Start with the original image, then blur the previous level using &sigma; = 2, 4, 8, 16, and 32. All six levels keep the same dimensions; the increasing blur separates fine texture from broader shading without downsampling.</li>
-      <li><strong>Convolution:</strong> Build each Gaussian from a 1D kernel and filter along rows and columns separately. This avoids the cost of a large 2D convolution at the coarser levels.</li>
+      <li><strong>Convolution:</strong> Build each Gaussian from a 1D kernel extending three standard deviations on either side, then filter along rows and columns separately, reflecting the image at the borders. This gives the same filtering as the corresponding 2D kernel at a lower cost.</li>
       <li><strong>Laplacian stack:</strong> Subtract the next, more blurred Gaussian image from each level. Keep the last Gaussian as well, since the differences alone would lose the broad color and shading needed to reconstruct the image.</li>
     </ol>
 
@@ -400,7 +401,7 @@ Dy = Dx.T</code></pre>
       </div>
     </div>
     <h4>Laplacian Stacks</h4>
-    <p>The first bands contain the fruit's surface texture and sharp outline. Later bands contain broader changes around the highlights and sides. Adding the bands and the final blurred level recovers the original image.</p>
+    <p>The first bands contain the fruit's surface texture and sharp outline. Later bands contain broader changes around the highlights and sides. Adding the bands and the final blurred level recovers the original image: the intermediate Gaussian levels cancel between adjacent differences.</p>
 
     <div class="stack-sheet">
       <div class="img-card">
@@ -475,7 +476,7 @@ Dy = Dx.T</code></pre>
       <li><strong>Blend each level:</strong> Multiply the first image's band by the mask and the second image's band by its complement, then add the contributions.</li>
       <li><strong>Reconstruct:</strong> Sum the blended bands, including the last blurred level. This lets the broad lighting transition spread farther than the fine detail.</li>
     </ol>
-    <p>The apple/orange result in <a href="#stacks">2.3</a> uses a straight split. For the custom pairs, curved boundaries let the join pass through the cups and between the landscape subjects.</p>
+    <p>The apple/orange result in <a href="#stacks">2.3</a> uses a straight split. For each custom pair, the binary mask selects pixels to the left of a boundary that follows one gentle sine wave down the image, centered at half the width. The sideways variation is 4% of the width for the drinks and 5.5% for the landscapes, placing the join through the cups and between the landscape subjects.</p>
 
     <h4>Custom Blend 1: Iced + Hot Drink</h4>
     <p>The cups were photographed at different sizes and heights. Matching their center positions and heights brings the bodies of the cups closer before blending. After cropping to the shared area, the mask keeps the iced drink on the left and the hot drink on the right.</p>
