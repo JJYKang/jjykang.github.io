@@ -21,21 +21,25 @@
   <section id="part1">
     <h2>Part 1: Fun with Filters</h2>
     <h3 id="convolutions">Part 1.1: Convolutions from Scratch</h3>
-    <p>Convolution flips the kernel in both directions and computes a weighted sum at each pixel. I implemented this using four loops, then two loops with NumPy handling the elementwise multiplication and sum.</p>
+    <ol>
+      <li><strong>Prepare the image:</strong> Add zero padding and flip the kernel once before visiting the image pixels.</li>
+      <li><strong>Four-loop version:</strong> At each pixel, loop over the kernel rows and columns, multiplying each weight by its corresponding image value and accumulating the result.</li>
+      <li><strong>Two-loop version:</strong> Take an image patch the size of the kernel, multiply the two arrays, and sum with NumPy. This replaces the two inner loops.</li>
+    </ol>
     <h4>Four-Loop Implementation</h4>
     <pre><code data-source="convolve_four_loops"></code></pre>
     <h4>Two-Loop Implementation</h4>
     <pre><code data-source="convolve_two_loops"></code></pre>
     <h4>Padding and Boundary Handling</h4>
-    <p>Both implementations use zero padding and return the same image size by default. The 9&times;9 box filter uses four zeros on each side; the finite difference filters use one zero on each side along their filtering axis. Zero padding darkens the blurred image at the border and creates derivative responses along the frame.</p>
+    <p>Padding allows the filters to reach the image boundaries without shrinking the output. The box filter needs four rows or columns of zeros on each side; the difference filters need one along their filtering direction. This introduces some border effects: the box-filtered selfie darkens at the frame, and the difference filters respond to the jump between the photograph and the zeros.</p>
     <pre><code data-source="zero_pad"></code></pre>
     <pre><code data-source="_prepare"></code></pre>
     <h4>Filters and Results</h4>
     <pre><code>box = np.ones((9, 9)) / 81
 Dx = np.array([[1.0, 0.0, -1.0]])
 Dy = Dx.T</code></pre>
-    <p>I converted my selfie to grayscale and resized it to a maximum dimension of 320 pixels before applying the filters.</p>
-    <p>The results below use the two-loop implementation. Signed derivatives are displayed on a fixed [&minus;1, 1] scale, with zero shown as gray.</p>
+    <p>The selfie was converted to grayscale and reduced to 240&times;320 pixels to keep the four-loop runtime manageable. The box filter softens the face and background, while the difference filters pick out changes across the hair, face, and clothing.</p>
+
     <div class="grid-2">
       <div class="img-card">
         <img src="./media/part1/1_1/original.png" alt="Selfie converted to grayscale">
@@ -55,19 +59,23 @@ Dy = Dx.T</code></pre>
       </div>
     </div>
     <h4>Comparison with SciPy</h4>
-    <p>The reference is <code>scipy.signal.convolve2d(image, kernel, mode="same", boundary="fill", fillvalue=0)</code>. Maximum absolute error is measured before converting the results to display images.</p>
+    <p>For a fair comparison, SciPy uses the same output size and zero padding. The table compares the computed arrays directly, before saving them as images.</p>
     <p id="benchmark-context"></p>
     <div class="table-scroll"><table>
       <thead><tr><th scope="col">Filter</th><th scope="col">Implementation</th><th scope="col">Runtime (ms)</th><th scope="col">Max Absolute Error</th></tr></thead>
       <tbody id="benchmark-body"></tbody>
     </table></div>
     <p id="runtime-summary"></p>
-    <p>The two-loop version reduces Python overhead for the box filter, while NumPy window operations cost more than the explicit loops for the small derivative kernels. SciPy runs the convolution in compiled code. All three methods use the same zero-filled boundaries.</p>
+    <p>For the box filter, replacing the inner loops with NumPy gives a noticeable speedup. That advantage disappears with the much smaller difference kernels, where creating and summing a patch costs more than the few multiplications in the loops. SciPy is faster in all three cases.</p>
     <noscript><p>View <a href="./src/convolution.py">the convolution code</a>. Enable JavaScript to see the saved timings and code snippets.</p></noscript>
 
     <h3 id="finite-differences">Part 1.2: Finite Difference Operator</h3>
-    <p>I convolved the cameraman image with the same D<sub>x</sub> and D<sub>y</sub> filters as 1.1, then computed gradient magnitude as &radic;(D<sub>x</sub><sup>2</sup> + D<sub>y</sub><sup>2</sup>). Pixels above the threshold become white in the binary edge image. Symmetric padding avoids artificial border responses.</p>
-    <p>Input intensities use [0, 1]. Signed derivatives use [&minus;1, 1], with zero shown as gray; magnitude uses [0, &radic;2]. Thresholds apply before display scaling.</p>
+    <ol>
+      <li><strong>Partial derivatives:</strong> Apply D<sub>x</sub> and D<sub>y</sub> from 1.1 to the grayscale cameraman image. Here, the border is mirrored to avoid introducing a jump to black outside the photograph.</li>
+      <li><strong>Gradient magnitude:</strong> Square the two derivative images, add them, and take the square root to combine horizontal and vertical changes.</li>
+      <li><strong>Binary edges:</strong> Keep pixels whose magnitude exceeds the threshold and discard the rest.</li>
+    </ol>
+
     <div class="grid-2">
       <div class="img-card">
         <img src="./media/part1/1_2/original.png" alt="Original grayscale cameraman image" loading="lazy">
@@ -91,19 +99,19 @@ Dy = Dx.T</code></pre>
       </div>
     </div>
     <h4>Threshold Selection</h4>
-    <p>I selected <span data-edge-threshold>0.2</span> after comparing 0.1, 0.2, and 0.3. A lower threshold retains too much grass texture; a higher one breaks weaker subject and tripod edges. The selected value preserves the main outlines, with some fine texture remaining.</p>
+    <p>At 0.1, much of the grass texture survives alongside the subject. At 0.3, the background is cleaner, but weaker parts of the subject and tripod outlines begin to break up. We kept <span data-edge-threshold>0.2</span> as a compromise: the main outlines remain, although the ground is still noisy.</p>
     <p>Input: <a href="https://cal-cs180.github.io/fa24/hw/proj2/cameraman.png">Berkeley assignment cameraman image</a>.</p>
     <h3 id="dog">Part 1.3: Derivative of Gaussian (DoG) Filter</h3>
-    <p>I constructed a <span data-dog-size>9</span>&times;<span data-dog-size>9</span> Gaussian (&sigma; = <span data-dog-sigma>2</span>) using <code>cv2.getGaussianKernel</code> and the outer product of its 1D kernel. I blurred the cameraman image, then applied the finite difference filters.</p>
+    <p>The grass and background texture in 1.2 produce many responses that are not useful as object boundaries. To reduce these, the image is first blurred with a <span data-dog-size>9</span>&times;<span data-dog-size>9</span> Gaussian, using &sigma; = <span data-dog-sigma>2</span>. The kernel comes from the outer product of a 1D kernel returned by <code>cv2.getGaussianKernel</code>. The same derivative, magnitude, and thresholding steps are then applied to the blurred image.</p>
     <div class="grid-2">
       <div class="img-card">
         <img src="./media/part1/1_3/blurred.png" alt="Gaussian blurred cameraman image" loading="lazy">
-        <div class="img-caption"><div class="img-title">Blurred Cameraman</div>Gaussian smoothing reduces fine texture.</div>
+        <div class="img-caption"><div class="img-title">Blurred Cameraman</div>Blurred before computing the derivatives.</div>
       </div>
     </div>
 
     <h4>Derivative of Gaussian Filters</h4>
-    <p>Convolving the Gaussian with D<sub>x</sub> and D<sub>y</sub> produces DoG filters that combine smoothing and differentiation. Full convolution preserves their complete support. In the kernel displays, gray is zero, white is positive, and black is negative; both use the same scale.</p>
+    <p>For the second approach, convolve the Gaussian kernel with D<sub>x</sub> and D<sub>y</sub> first, then apply those combined filters directly to the original image. Using full convolution when building the kernels keeps their outer coefficients instead of cutting them off.</p>
     <div class="grid-2">
       <div class="img-card">
         <img src="./media/part1/1_3/dog_kernel_x.png" alt="X derivative of Gaussian kernel" loading="lazy">
@@ -138,8 +146,8 @@ Dy = Dx.T</code></pre>
         <div class="img-caption"><div class="img-title">DoG Gradient Magnitude</div></div>
       </div>
     </div>
-    <p>Associativity gives (image &lowast; G) &lowast; D<sub>x</sub> = image &lowast; (G &lowast; D<sub>x</sub>), and similarly for y. Both methods use the same symmetric extension and crop only after filtering. Display scales match 1.2.</p>
-    <p>Maximum absolute differences are <span data-dog-error="dx"></span> for x, <span data-dog-error="dy"></span> for y, and <span data-dog-error="magnitude"></span> for magnitude. The binary maps differ at <span data-dog-error="different_edge_pixels"></span> pixels, confirming equivalence up to floating-point rounding.</p>
+    <p>To check whether combining the filters changes the result, both approaches use the same padded input and crop back to the original size only after filtering. This avoids differences caused by handling the intermediate blur's border separately.</p>
+    <p>The largest differences are <span data-dog-error="dx"></span> for x, <span data-dog-error="dy"></span> for y, and <span data-dog-error="magnitude"></span> for magnitude. These are at floating-point rounding level, and the binary edge images differ at <span data-dog-error="different_edge_pixels"></span> pixels. The combined filters therefore reproduce the two-step result in this comparison.</p>
 
     <h4>Comparison with the Finite Difference Method</h4>
     <div class="grid-2">
@@ -152,10 +160,14 @@ Dy = Dx.T</code></pre>
         <div class="img-caption"><div class="img-title">Gaussian + Finite Differences (1.3)</div>Threshold: <span data-dog-threshold>0.08</span>.</div>
       </div>
     </div>
-    <p>Smoothing removes much of the grass texture but widens the outlines and loses fine camera detail. It also weakens gradients, so I lowered the threshold to <span data-dog-threshold>0.08</span>. Of 0.05, 0.08, and 0.12, this best retains the main camera and tripod outlines without much background texture.</p>
+    <p>After smoothing, much of the grass texture disappears and the subject's outline becomes more continuous. The edges are also wider, and some fine camera details are lost. Keeping the old threshold of 0.2 would discard too much because smoothing weakens the gradients. Of 0.05, 0.08, and 0.12, <span data-dog-threshold>0.08</span> retains the main camera and tripod outlines without bringing back much of the ground texture.</p>
     <h3 id="orientations">Bells &amp; Whistles: Gradient Orientations</h3>
-    <p>I computed orientations from the smoothed DoG gradients without built-in angle functions. I reduced the derivative ratio to the first octant, approximated arctangent with a 12-term series, then restored the octant and quadrant from the derivative signs and magnitudes. Angles increase clockwise from the right because image y increases downward.</p>
-    <p>Hue shows gradient direction, saturation is one, and brightness shows magnitude scaled by its 99th percentile and clipped to [0, 1]. Flat regions are black. The gradient points toward increasing intensity, perpendicular to the edge.</p>
+    <ol>
+      <li><strong>Calculate direction:</strong> Use the smoothed x/y derivatives from 1.3. Divide the smaller derivative magnitude by the larger so only an angle between 0&deg; and 45&deg; needs to be approximated. Skip the division where both derivatives are zero.</li>
+      <li><strong>Approximate the angle:</strong> Use a 12-term arctangent series, reducing larger ratios first so the series converges quickly. Recover the full direction from the derivative signs and which derivative was larger. This avoids using a built-in angle function.</li>
+      <li><strong>Assign colors:</strong> Map the resulting direction to hue, keep saturation at one, and use gradient magnitude for brightness. Weak responses stay dark so flat areas do not compete with the visible edges.</li>
+    </ol>
+
     <div class="grid-2">
       <div class="img-card">
         <img src="./media/part1/1_3/orientations.png" alt="Cameraman gradients colored by orientation, with brightness showing edge strength" loading="lazy">
@@ -166,17 +178,21 @@ Dy = Dx.T</code></pre>
         <div class="img-caption"><div class="img-title">Orientation Color Key</div>Right: 0&deg; (red). Down: 90&deg; (yellow-green). Left: 180&deg; (cyan). Up: 270&deg; (violet).</div>
       </div>
     </div>
-    <p>Opposite sides of the tripod legs have different hues because their intensity changes point in opposite directions. Hue changes around the head and shoulders as the gradient direction turns.</p>
+    <p>The two sides of a tripod leg often have different colors: one side changes from dark to light, while the other changes back. Around the head and shoulders, the color follows the changing direction of the outline. The key uses image coordinates, so angles increase clockwise from the right.</p>
   </section>
 
   <section id="part2">
     <h2>Part 2: Fun with Frequencies</h2>
     <h3 id="sharpening">Part 2.1: Image Sharpening</h3>
-    <p>A Gaussian retains low frequencies. Subtracting this blur from the image gives the high-frequency detail: H = I &minus; I &lowast; G. Unsharp masking adds a scaled version back: I<sub>sharp</sub> = I + &alpha;H. This increases local contrast around edges.</p>
-    <p>I combined the operation into one filter: K = (1 + &alpha;)&delta; &minus; &alpha;G, where &delta; is an impulse at the kernel center. Each RGB channel is convolved with K using symmetric padding. All results use a 9&times;9 Gaussian with &sigma; = 2; values are clipped to [0, 1] only when saving.</p>
+    <ol>
+      <li><strong>Blur:</strong> Apply a 9&times;9 Gaussian with &sigma; = 2 to each color channel. This retains the broad shading and suppresses fine detail.</li>
+      <li><strong>Extract detail:</strong> Subtract the blur from the original. The remainder contains the edges and texture weakened by the Gaussian.</li>
+      <li><strong>Sharpen:</strong> Add a multiple of that remainder back to the original. The amount &alpha; controls how strongly the existing detail is emphasized.</li>
+    </ol>
+    <p>To perform this in one convolution, the implemented kernel is <code>K = (1 + alpha) * delta - alpha * G</code>, where <code>delta</code> is one at the center and zero elsewhere. This combines the original-image contribution and the subtracted Gaussian blur in a single filter.</p>
 
     <h4>Taj Mahal and Sharpening Strength</h4>
-    <p>The high-frequency displays below show 0.5 + 4H: gray is zero, with signed details amplified for visibility. This display scaling is not used for sharpening.</p>
+
     <div class="grid-3">
       <div class="img-card">
         <img src="./media/part2/2_1/taj/original.png" alt="Original supplied Taj Mahal image" loading="lazy">
@@ -188,7 +204,7 @@ Dy = Dx.T</code></pre>
       </div>
       <div class="img-card">
         <img src="./media/part2/2_1/taj/high_frequency.png" alt="Amplified signed high-frequency detail of the Taj Mahal" loading="lazy">
-        <div class="img-caption"><div class="img-title">High Frequencies</div>Original minus blur; display amplified.</div>
+        <div class="img-caption"><div class="img-title">High Frequencies</div>Detail removed by the blur; contrast increased for visibility.</div>
       </div>
       <div class="img-card">
         <img src="./media/part2/2_1/taj/sharpened_1.png" alt="Taj Mahal sharpened with amount 1" loading="lazy">
@@ -203,10 +219,10 @@ Dy = Dx.T</code></pre>
         <div class="img-caption"><div class="img-title">&alpha; = 4</div></div>
       </div>
     </div>
-    <p>Increasing &alpha; strengthens the dome and facade details. At &alpha; = 4, bright and dark halos around the building and trees become more noticeable. I chose &alpha; = 2 as a compromise between stronger detail and excessive edge contrast.</p>
+    <p>At &alpha; = 1, the dome and facade gain some definition. Increasing to 2 makes the detail clearer, but by 4 the bright and dark borders around the building and trees look excessive. We used 2 for the custom example as well, to compare the same settings on a different kind of detail.</p>
 
     <h4>Custom Image</h4>
-    <p>I applied the same filter to <code>data/custom/sharp.jpg</code>. The original photo is resized to a maximum dimension of 640 pixels, preserving its aspect ratio.</p>
+    <p>The same settings were applied to the dog photograph. This gives a second example with fine fur texture and a softer, out-of-focus background.</p>
     <div class="grid-2">
       <div class="img-card">
         <img src="./media/part2/2_1/custom/original.png" alt="Original custom photo of a dog" loading="lazy">
@@ -218,17 +234,17 @@ Dy = Dx.T</code></pre>
       </div>
       <div class="img-card">
         <img src="./media/part2/2_1/custom/high_frequency.png" alt="Amplified signed high-frequency detail of the dog photo" loading="lazy">
-        <div class="img-caption"><div class="img-title">High Frequencies</div>Display amplified by 4 around gray.</div>
+        <div class="img-caption"><div class="img-title">High Frequencies</div>Contrast increased to make the detail visible.</div>
       </div>
       <div class="img-card">
         <img src="./media/part2/2_1/custom/sharpened_2.png" alt="Custom dog photo sharpened with amount 2" loading="lazy">
         <div class="img-caption"><div class="img-title">Sharpened, &alpha; = 2</div></div>
       </div>
     </div>
-    <p>Sharpening increases contrast in the fur and around the eyes and nose. It emphasizes detail already present, but cannot correct areas that were out of focus in the original.</p>
+    <p>The fur and the edges around the eyes and nose become more pronounced. The soft background stays soft; increasing edge contrast there does not bring it into focus.</p>
 
     <h4>Blur Then Sharpen</h4>
-    <p>Starting from the custom original above, I applied the Gaussian blur and then sharpened that blurred image with &alpha; = 2. The blur is shown again here for comparison.</p>
+    <p>For the recovery experiment, the dog photo was first blurred with the Gaussian, then the blurred version was sharpened with &alpha; = 2. Compare the result below with both the blurred input and the original above.</p>
     <div class="grid-2">
       <div class="img-card">
         <img src="./media/part2/2_1/custom/blurred.png" alt="Blurred input for the recovery experiment" loading="lazy">
@@ -239,13 +255,17 @@ Dy = Dx.T</code></pre>
         <div class="img-caption"><div class="img-title">Blurred Then Sharpened</div>&alpha; = 2.</div>
       </div>
     </div>
-    <p>The result regains edge contrast, but the fine fur texture remains softer than in the original. Unsharp masking boosts the remaining high frequencies; it does not reconstruct details removed by blurring.</p>
+    <p>The stronger edges make the result look less blurry, but the fine fur texture does not return to its original appearance. This was a useful limit of the method: sharpening can emphasize what remains after blurring, but it is not an inverse of the blur.</p>
     <h3 id="hybrids">Part 2.2: Hybrid Images</h3>
-    <p>A hybrid combines the low frequencies of one image with the high frequencies of another: I<sub>hybrid</sub> = I<sub>A</sub> &lowast; G<sub>low</sub> + (I<sub>B</sub> &minus; I<sub>B</sub> &lowast; G<sub>high</sub>). Fine detail dominates nearby; at a distance, the blurred image becomes more visible. View the results close up, then step back or reduce the page zoom.</p>
-    <p>I manually selected two corresponding landmarks and used them to match translation, rotation, and uniform scale. Inputs are resized to a maximum dimension of 512 pixels before alignment, then cropped to shared content. Gaussian kernels extend to three standard deviations and use symmetric padding. Filtered components are added before clipping for display.</p>
+    <ol>
+      <li><strong>Align:</strong> Select two matching landmarks, then use their spacing and direction to determine scale, rotation, and translation. Crop both images to their shared content.</li>
+      <li><strong>Keep the broad structure:</strong> Gaussian-blur the first image to retain its low frequencies.</li>
+      <li><strong>Keep the detail:</strong> Subtract a Gaussian-blurred copy from the second image to retain its high frequencies.</li>
+      <li><strong>Combine:</strong> Add the two filtered images. Check the result close up and at a smaller viewing size, adjusting the blur scales if either source overwhelms the other.</li>
+    </ol>
 
     <h4>Derek + Nutmeg</h4>
-    <p>I aligned the eyes and combined low-frequency Derek (&sigma;<sub>low</sub> = 5) with high-frequency Nutmeg (&sigma;<sub>high</sub> = 2). The cat's eyes, whiskers, and fur dominate nearby; Derek's face emerges at a reduced viewing size.</p>
+    <p>The eyes provide corresponding landmarks for Derek and Nutmeg. Derek supplies the low frequencies with &sigma; = 5, while Nutmeg supplies the detail with &sigma; = 2. Up close, the whiskers and fur are noticeable; reducing the image size makes Derek's face easier to read.</p>
     <div class="grid-3">
       <div class="img-card">
         <img src="./media/part2/2_2/derek_nutmeg/original_a.png" alt="Derek" loading="lazy">
@@ -262,7 +282,7 @@ Dy = Dx.T</code></pre>
     </div>
 
     <h4>Custom Pair 1: Person + Dog</h4>
-    <p>This is my favorite result. Matching the eyes gives a stable shared face, although the nose and mouth shapes differ. The person supplies the low frequencies; the dog supplies the high frequencies.</p>
+    <p>The person/dog pair is used for the detailed analysis because the two eye positions can be matched reasonably well. The person's face provides the broad structure, while the dog's fur supplies the detail. The different nose and mouth shapes are still a limitation of the alignment.</p>
     <div class="grid-2">
       <div class="img-card">
         <img src="./media/part2/2_2/pair1/original_a.png" alt="Original A: Person" loading="lazy">
@@ -283,8 +303,8 @@ Dy = Dx.T</code></pre>
         <div class="img-caption"><div class="img-title">Aligned and Cropped B</div></div>
       </div>
     </div>
-    <p>I compared Gaussian scales of 3, 5, and 7 for the low band and 1, 2, and 3 for the high band. I selected &sigma;<sub>low</sub> = 3 and &sigma;<sub>high</sub> = 2: more low-pass smoothing obscures the person's face at small sizes, while a higher high-pass scale retains too much of the dog's broad facial structure. A high-pass scale of 1 leaves weaker fur detail.</p>
-    <p>The Gaussian has a gradual frequency response, rather than a hard cutoff. These scales correspond to approximate half-amplitude frequencies of 0.062 and 0.094 cycles/pixel for the low-pass and high-pass filters, respectively, at the aligned resolution.</p>
+    <p>For the low-pass image, scales of 3, 5, and 7 were compared. At 5 and 7, too much of the person's face is lost at a small viewing size, so we kept 3. For the high-pass image, 1 leaves the fur rather faint, while 3 retains more of the dog's muzzle and starts to dominate the face. A scale of 2 works better between these two cases.</p>
+
     <div class="grid-2">
       <div class="img-card">
         <img src="./media/part2/2_2/pair1/low.png" alt="Low-Pass Person" loading="lazy">
@@ -292,12 +312,12 @@ Dy = Dx.T</code></pre>
       </div>
       <div class="img-card">
         <img src="./media/part2/2_2/pair1/high.png" alt="High-Pass Dog" loading="lazy">
-        <div class="img-caption"><div class="img-title">High-Pass Dog</div>&sigma; = 2; luminance detail. Display: 0.5 + 2H, with zero shown as gray.</div>
+        <div class="img-caption"><div class="img-title">High-Pass Dog</div>&sigma; = 2; luminance detail. Contrast increased to make the fur detail visible.</div>
       </div>
     </div>
 
     <h4>Final Hybrid and Color Comparison</h4>
-    <p>I compared grayscale, color in the low band, color in the high band, and color in both bands. I chose low-band color: skin tones support the person at a distance while the dog's grayscale fur remains visible nearby. High-band color adds colored edge detail but carries little broad color identity. Color in both bands makes the dog's fur more prominent and weakens the switch to the person.</p>
+    <p>Color in the low-frequency image works better for this pair: the skin tones help the person remain recognizable when the image is small, while the grayscale fur still contributes detail nearby. With color in both bands, the dog's fur becomes more prominent. Color only in the high band adds colored edges, but loses the broad skin tones that help the distant view. The low-band color version was retained.</p>
     <div class="grid-2">
       <div class="img-card">
         <img src="./media/part2/2_2/pair1/gray.png" alt="Both Bands Grayscale" loading="lazy">
@@ -318,7 +338,7 @@ Dy = Dx.T</code></pre>
     </div>
 
     <h4>Frequency Analysis</h4>
-    <p>Each spectrum shows log(1 + |fftshift(fft2(I))|), computed from luminance before display clipping. All five use the same brightness scale, with low frequencies at the center. The low-pass image concentrates energy near the center; the high-pass residual suppresses that center and retains a broader spread of detail. Their sum contains both frequency bands.</p>
+    <p>For this pair, the Fourier transform is calculated for both aligned inputs, both filtered images, and the final hybrid. The magnitudes are shown logarithmically so weaker frequencies remain visible, with the low frequencies moved to the center. All five use the same contrast scale for comparison. After low-pass filtering, much of the outer detail is suppressed; the high-pass residual removes much of the central low-frequency content. The hybrid combines the two.</p>
     <div class="grid-3">
       <div class="img-card">
         <img src="./media/part2/2_2/pair1/fft_input_a.png" alt="Aligned Person Spectrum" loading="lazy">
@@ -343,7 +363,7 @@ Dy = Dx.T</code></pre>
     </div>
 
     <h4>Custom Pair 2: Cat + Squirrel</h4>
-    <p>I matched head and torso positions because the squirrel is in profile while the cat faces the camera. The cat supplies the low band (&sigma;<sub>low</sub> = 3); the squirrel supplies the high band (&sigma;<sub>high</sub> = 1). The smaller high-pass scale limits broad squirrel features and background foliage. Color is retained only in the cat's low-frequency component.</p>
+    <p>Matching the eyes is not practical here because the squirrel is in profile. Instead, the head and torso positions are used to bring the animals to a similar position and scale. The cat supplies the low frequencies (&sigma; = 3), and the squirrel supplies the high frequencies (&sigma; = 1). The smaller high-pass scale keeps the squirrel's broad head shape and surrounding foliage from dominating as strongly.</p>
     <div class="grid-3">
       <div class="img-card">
         <img src="./media/part2/2_2/pair2/original_a.png" alt="Original A: Cat" loading="lazy">
@@ -358,10 +378,14 @@ Dy = Dx.T</code></pre>
         <div class="img-caption"><div class="img-title">Cat + Squirrel</div></div>
       </div>
     </div>
-    <p>This is the weaker result: the squirrel's profile and foliage remain visible near the cat's frontal face. Reducing the image size favors the cat's overall shape, but the pose and background differences make the switch less convincing than in the eye-aligned face pairs.</p>
+    <p>This pair does not switch as cleanly as the face examples. The squirrel's profile and the leaves remain noticeable over the cat's frontal face. Making the image smaller favors the cat's body shape, but changing the filter scales cannot fully compensate for the different poses and backgrounds.</p>
     <h3 id="stacks">Part 2.3: Gaussian and Laplacian Stacks</h3>
-    <p>I built six-level stacks for the supplied apple and orange. Each input is resized once to 480&times;344 pixels; every computed stack level keeps that resolution. No pyramid functions or downsampling are used.</p>
-    <p>G<sub>0</sub> is the original. Each subsequent Gaussian level blurs the preceding level with &sigma; = 2, 4, 8, 16, and 32. I construct the 1D Gaussian kernels and convolve along rows and columns separately, using symmetric boundaries. This progressively removes finer frequencies without changing image size.</p>
+    <ol>
+      <li><strong>Gaussian stack:</strong> Start with the original image, then blur the previous level using &sigma; = 2, 4, 8, 16, and 32. All six levels keep the same dimensions; the increasing blur separates fine texture from broader shading without downsampling.</li>
+      <li><strong>Convolution:</strong> Build each Gaussian from a 1D kernel and filter along rows and columns separately. This avoids the cost of a large 2D convolution at the coarser levels.</li>
+      <li><strong>Laplacian stack:</strong> Subtract the next, more blurred Gaussian image from each level. Keep the last Gaussian as well, since the differences alone would lose the broad color and shading needed to reconstruct the image.</li>
+    </ol>
+
     <h4>Gaussian Stacks</h4>
     <div class="stack-sheet">
       <div class="img-card">
@@ -376,8 +400,8 @@ Dy = Dx.T</code></pre>
       </div>
     </div>
     <h4>Laplacian Stacks</h4>
-    <p>Each band is L<sub>i</sub> = G<sub>i</sub> &minus; G<sub>i+1</sub>. The final level stores G<sub>5</sub> as the low-pass residual, so summing all six levels reconstructs the original. Fine bands show surface texture and sharp boundaries; coarser bands show broader edges and shading.</p>
-    <p>The signed bands use one shared display scale across both fruits, with zero shown as gray. The final residual uses normal RGB intensities. Panel thumbnails are resized only for display.</p>
+    <p>The first bands contain the fruit's surface texture and sharp outline. Later bands contain broader changes around the highlights and sides. Adding the bands and the final blurred level recovers the original image.</p>
+
     <div class="stack-sheet">
       <div class="img-card">
         <img src="./media/part2/2_3/apple_laplacian.png" alt="Apple Laplacian Stack" loading="lazy">
@@ -391,8 +415,8 @@ Dy = Dx.T</code></pre>
       </div>
     </div>
     <h4>Figure 3.42 (a)&ndash;(l): Stack Version</h4>
-    <p>I made a left/right mask and a Gaussian stack of that mask using the same blur scales. At each level, the apple contribution is M<sub>i</sub>L<sub>apple,i</sub> and the orange contribution is (1 &minus; M<sub>i</sub>)L<sub>orange,i</sub>. Adding them gives a combined band; summing all bands, including the residual, gives the oraple.</p>
-    <p>As in the reference figure, the first three rows show levels 0, 2, and 4: apple contribution, orange contribution, and their sum. Each row uses a shared signed display scale. The final row sums all six levels for each column. This uses full-resolution stacks in place of the reference's pyramids.</p>
+    <p>For the oraple, a mask selects the apple on the left and the orange on the right. Blurring that mask at the same scales as the images gives a narrow join for the fine bands and a wider join for the coarse ones. Each pair of bands is weighted by its corresponding mask, added, and then summed with the remaining blurred level.</p>
+    <p>Rows one to three show levels 0, 2, and 4. The columns contain the apple contribution, orange contribution, and their sum. The last row reconstructs each column using all six levels. This follows Figure 3.42 using stacks rather than downsampled pyramids.</p>
     <div class="grid-3">
       <div class="img-card">
         <img src="./media/part2/2_3/figure_a.png" alt="(a) Apple contribution" loading="lazy">
@@ -443,13 +467,18 @@ Dy = Dx.T</code></pre>
         <div class="img-caption"><div class="img-title">(l) Oraple</div>All bands plus the low-pass residual.</div>
       </div>
     </div>
-    <p>The fine bands retain a narrow transition, while coarser bands blend over wider regions. Together they preserve fruit texture while smoothing the overall color and lighting transition.</p>
+    <p>The final fruit keeps the apple and orange textures on either side, while their colors meet more gradually at the center. The band images show why: the broad changes cross the seam farther than the fine texture does.</p>
     <h3 id="blending">Part 2.4: Multiresolution Blending</h3>
-    <p>I reused the six-level Gaussian and Laplacian stacks from 2.3. At each level, a Gaussian-smoothed mask weights the two Laplacian bands: B<sub>i</sub> = M<sub>i</sub>L<sub>A,i</sub> + (1 &minus; M<sub>i</sub>)L<sub>B,i</sub>. Summing the weighted bands and the final low-pass residual reconstructs the blend. Fine details transition narrowly; coarse color and lighting transition more gradually.</p>
-    <p>The supplied apple/orange example and its band contributions are shown in <a href="#stacks">2.3</a>. The two custom blends below use curved, nonrectangular masks. White selects A and black selects B. Both use six levels, starting with &sigma; = 2 and doubling the blur scale at each level.</p>
+    <ol>
+      <li><strong>Separate the image scales:</strong> Build the Gaussian and Laplacian stacks for both inputs using the six levels from 2.3.</li>
+      <li><strong>Build the mask stack:</strong> Start with the binary mask and blur it at the same scales. White selects the first image and black selects the second.</li>
+      <li><strong>Blend each level:</strong> Multiply the first image's band by the mask and the second image's band by its complement, then add the contributions.</li>
+      <li><strong>Reconstruct:</strong> Sum the blended bands, including the last blurred level. This lets the broad lighting transition spread farther than the fine detail.</li>
+    </ol>
+    <p>The apple/orange result in <a href="#stacks">2.3</a> uses a straight split. For the custom pairs, curved boundaries let the join pass through the cups and between the landscape subjects.</p>
 
     <h4>Custom Blend 1: Iced + Hot Drink</h4>
-    <p>I matched the cup centers and heights with a uniform scale and translation, then cropped to shared content. A curved seam through the cups combines the iced drink on the left with the hot drink on the right, along with their day/night backgrounds.</p>
+    <p>The cups were photographed at different sizes and heights. Matching their center positions and heights brings the bodies of the cups closer before blending. After cropping to the shared area, the mask keeps the iced drink on the left and the hot drink on the right.</p>
     <div class="grid-2">
       <div class="img-card">
         <img src="./media/part2/2_4/drinks/input_a.png" alt="Input A: Iced Drink" loading="lazy">
@@ -478,11 +507,11 @@ Dy = Dx.T</code></pre>
         <div class="img-caption"><div class="img-title">Color Multiresolution Blend</div>Selected result.</div>
       </div>
     </div>
-    <p>The direct cut has an abrupt brightness change through the cup and background. Multiresolution blending softens that change while retaining the cup texture. The lids and printed designs still do not match geometrically, so their join remains visible.</p>
-    <p>Color helps distinguish the brown iced drink from the pale hot-drink cup and preserves the warm night lighting. The grayscale version keeps the shape and texture but loses these cues. I therefore retained RGB color in both inputs, applying the same spatial mask to every channel.</p>
+    <p>Compared with the direct cut, the blend makes the brightness change through the cup and background less abrupt. Alignment helps the cup bodies meet, but the lids and printed designs still differ. Those mismatches remain visible even after the lighting transition is softened.</p>
+    <p>Color is useful here because it separates the brown iced drink from the pale hot-drink cup and retains the warmer night lighting. The grayscale version keeps the shape and texture, but loses those differences. We kept color in both inputs and used the same mask for all three channels.</p>
 
     <h4>Drink Blend: Laplacian Contributions</h4>
-    <p>Following Figure 10 of Burt and Adelson, the first three rows show masked bands at levels 0, 2, and 4. Columns show the iced-drink contribution, hot-drink contribution, and their sum. Gray represents zero, and each row uses one signed display scale. The last row sums all six levels, including the low-pass residual, to show the reconstructed masked inputs and final blend.</p>
+    <p>As in Figure 10 of Burt and Adelson, the rows below show fine, medium, and coarse bands at levels 0, 2, and 4. Each row contains the iced-drink contribution, hot-drink contribution, and their sum. The last row adds all six levels to reconstruct the two masked contributions and the final blend. Gray has been added to the band images so negative differences can be seen.</p>
     <div class="grid-3">
       <div class="img-card">
         <img src="./media/part2/2_4/drinks/process_a.png" alt="(a) Iced drink contribution" loading="lazy">
@@ -535,7 +564,7 @@ Dy = Dx.T</code></pre>
     </div>
 
     <h4>Custom Blend 2: Coast + Mountains</h4>
-    <p>I resized the inputs without stretching and center-cropped the taller image to the same canvas. A curved seam between the two people retains the coast on the left and the forested mountain scene on the right.</p>
+    <p>The landscape images were cropped to the same size without stretching them. The boundary curves between the two people so that neither is cut in half, keeping the coast on the left and the mountain scene on the right.</p>
     <div class="grid-2">
       <div class="img-card">
         <img src="./media/part2/2_4/landscapes/input_a.png" alt="Input A: Coast" loading="lazy">
@@ -560,7 +589,7 @@ Dy = Dx.T</code></pre>
         <div class="img-caption"><div class="img-title">Color Multiresolution Blend</div></div>
       </div>
     </div>
-    <p>The multiresolution result softens the sky and ground transition while preserving both people. Ocean blue and forest green retain the identity of each location. The horizons and terrain do not correspond, so the result is a deliberately mixed landscape rather than a seamless panorama; blending alone cannot correct that geometry.</p>
+    <p>The join is softer than the direct cut, and both people remain clear, but the result still looks like two different places joined together. The ocean horizon does not line up with the mountain terrain. A broader lighting transition helps with the sky colors, but does not hide that difference in structure.</p>
   </section>
 
   <section id="reflection">
