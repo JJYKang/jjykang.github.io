@@ -10,6 +10,7 @@
   </script>
   <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
   <script defer src="./media/part_a/a2/results.js"></script>
+  <script defer src="./media/part_a/a3/results.js"></script>
   <script defer src="./page.js"></script>
 </head>
 <body>
@@ -54,7 +55,7 @@
       </div>
     </div>
     <h3 id="homographies">A.2: Recover Homographies</h3>
-    <p>I manually selected 12 corresponding points in the clinic images. Matching numbers mark the same landmark in both views. Coordinates use the original 2048&times;1536 images, with (0, 0) at the top-left and x increasing to the right.</p>
+    <p>Twelve corresponding points were manually selected in the clinic images. Matching numbers mark the same landmark in both views. Coordinates use the original 2048&times;1536 images, with (0, 0) at the top-left and x increasing to the right.</p>
     <div class="grid-2">
       <div class="img-card">
         <a href="./media/part_a/a2/points_1.jpg"><img src="./media/part_a/a2/points_1.jpg" alt="Twelve numbered correspondence points in clinic image 1" width="2048" height="1536" loading="lazy"></a>
@@ -84,14 +85,78 @@
     <p>This matrix maps Image 1 to Image 2, using \((u, v, 1)^T \sim H(x, y, 1)^T\).</p>
     <pre><code id="homography-matrix"></code></pre>
     <p>The reprojection RMSE over the selected points is <span id="reprojection-rmse"></span> pixels in Image 2.</p>
+
+    <h3 id="warping">A.3: Warp the Images</h3>
+    <p>For each output pixel, apply H<sup>&minus;1</sup> and divide by the homogeneous coordinate to find its position in the source image. The default canvas is computed from the four transformed image corners. A separate validity mask records which pixels sample the source image.</p>
+    <ul>
+      <li><strong>Nearest neighbor:</strong> Round the source coordinates and copy that pixel.</li>
+      <li><strong>Bilinear:</strong> Take the four surrounding pixels and weight them by their horizontal and vertical distances.</li>
+    </ul>
+    <p>With fractional offsets a and b from the upper-left neighbor, bilinear interpolation computes:</p>
+    <pre><code>(1-a)(1-b) I[y0, x0] + a(1-b) I[y0, x1]
++ (1-a)b I[y1, x0] + ab I[y1, x1]</code></pre>
+
+    <h4>Rectification 1: Clinic Sign</h4>
+    <p>The four marked corners are mapped to a 600&times;340 rectangle.</p>
+    <div class="grid-3">
+      <div class="img-card">
+        <img src="./media/part_a/a3/sign_source.png" alt="Source crop of the clinic sign with four selected corners" loading="lazy">
+        <div class="img-caption"><div class="img-title">Source Crop</div></div>
+      </div>
+      <div class="img-card">
+        <a href="./media/part_a/a3/sign_nearest.png"><img src="./media/part_a/a3/sign_nearest.png" alt="Clinic sign rectified with nearest-neighbor interpolation" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Nearest Neighbor</div></div>
+      </div>
+      <div class="img-card">
+        <a href="./media/part_a/a3/sign_bilinear.png"><img src="./media/part_a/a3/sign_bilinear.png" alt="Clinic sign rectified with bilinear interpolation" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Bilinear</div></div>
+      </div>
+    </div>
+
+    <h4>Rectification 2: House Window</h4>
+    <p>The window frame is mapped to a 600&times;400 rectangle.</p>
+    <div class="grid-3">
+      <div class="img-card">
+        <img src="./media/part_a/a3/window_source.png" alt="Source crop of the house window with four selected corners" loading="lazy">
+        <div class="img-caption"><div class="img-title">Source Crop</div></div>
+      </div>
+      <div class="img-card">
+        <a href="./media/part_a/a3/window_nearest.png"><img src="./media/part_a/a3/window_nearest.png" alt="House window rectified with nearest-neighbor interpolation" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Nearest Neighbor</div></div>
+      </div>
+      <div class="img-card">
+        <a href="./media/part_a/a3/window_bilinear.png"><img src="./media/part_a/a3/window_bilinear.png" alt="House window rectified with bilinear interpolation" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Bilinear</div></div>
+      </div>
+    </div>
+
+    <h4>Interpolation Comparison</h4>
+    <div class="grid-2">
+      <div class="img-card">
+        <img src="./media/part_a/a3/sign_nearest_detail.png" alt="Four-times enlarged detail of nearest-neighbor sign lettering" loading="lazy">
+        <div class="img-caption"><div class="img-title">Nearest Neighbor: 4&times; Detail</div></div>
+      </div>
+      <div class="img-card">
+        <img src="./media/part_a/a3/sign_bilinear_detail.png" alt="The same lettering detail using bilinear interpolation, enlarged four times" loading="lazy">
+        <div class="img-caption"><div class="img-title">Bilinear: 4&times; Detail</div></div>
+      </div>
+    </div>
+    <p>Nearest neighbor produces blocky steps around the letters and window frame. Bilinear interpolation smooths those transitions, giving softer edges. Nearest neighbor is faster because each output pixel uses one sample; bilinear combines four.</p>
+    <p>Median runtime over <span id="warp-repeats"></span> runs after a warm-up, including inverse mapping and interpolation:</p>
+    <div class="table-scroll"><table>
+      <thead><tr><th scope="col">Example</th><th scope="col">Output Size</th><th scope="col">Nearest Neighbor (ms)</th><th scope="col">Bilinear (ms)</th></tr></thead>
+      <tbody id="warp-timings"></tbody>
+    </table></div>
   </section>
 
   <section id="reproduce">
     <h2>Commands to Reproduce Results</h2>
     <p>Run from inside the <code>3/</code> directory:</p>
     <pre><code>pip install -r requirements.txt
-python scripts/part_a2.py</code></pre>
+python scripts/part_a2.py
+python scripts/part_a3.py</code></pre>
     <p><a href="./src/homography.py">Homography code</a> &bull; <a href="./scripts/part_a2.py">Correspondences and result generation</a> &bull; <a href="./media/part_a/a2/results.json">Saved points and matrix</a></p>
+    <p><a href="./src/warping.py">Inverse warping code</a> &bull; <a href="./scripts/part_a3.py">Rectification and result generation</a> &bull; <a href="./media/part_a/a3/results.json">Rectification points, matrices, and timings</a></p>
   </section>
 
   <footer><p>Jerry Kang &bull; SYDE 671 &bull; University of Waterloo</p></footer>
