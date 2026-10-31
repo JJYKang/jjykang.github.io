@@ -209,6 +209,22 @@
         <div class="img-caption"><div class="img-title">After ANMS</div><span data-corner-count="3-anms"></span> points.</div>
       </div>
     </div>
+    <h3 id="descriptors">B.2: Feature Descriptor Extraction</h3>
+    <p>For each selected corner, extract an axis-aligned 40&times;40 grayscale patch, apply a Gaussian blur with &sigma; = 2, and sample every fifth pixel to produce an 8&times;8 patch. Subtract its mean and divide by its standard deviation to normalize brightness and contrast. Each descriptor is stored as a vector of 64 values.</p>
+    <pre><code>descriptor = (patch_8x8 - patch_8x8.mean()) / patch_8x8.std()</code></pre>
+    <p>Each image produces 500 descriptors. Six examples from Image 2 are shown below.</p>
+    <div class="stack-sheet">
+      <div class="img-card">
+        <img src="./media/part_b/b2/examples_locations.jpg" alt="Six numbered 40-by-40 feature windows in house image 2" width="1024" height="768" loading="lazy">
+        <div class="img-caption"><div class="img-title">Feature Locations</div></div>
+      </div>
+    </div>
+    <div class="stack-sheet">
+      <div class="img-card">
+        <img src="./media/part_b/b2/examples_descriptors.png" alt="Six source patches and their corresponding normalized 8-by-8 descriptors" width="960" height="410" loading="lazy">
+        <div class="img-caption"><div class="img-title">Source Patches and Descriptors</div>Normalized values use a shared grayscale range of &minus;3 to 3.</div>
+      </div>
+    </div>
   </section>
 
   <section id="reproduce">
@@ -218,11 +234,13 @@
 python scripts/part_a2.py
 python scripts/part_a3.py
 python scripts/part_a4.py
-python scripts/part_b1.py</code></pre>
+python scripts/part_b1.py
+python scripts/part_b2.py</code></pre>
     <p><a href="./src/homography.py">Homography code</a> &bull; <a href="./scripts/part_a2.py">Correspondences and result generation</a> &bull; <a href="./media/part_a/a2/results.json">Saved points and matrix</a></p>
     <p><a href="./src/warping.py">Inverse warping code</a> &bull; <a href="./scripts/part_a3.py">Rectification and result generation</a> &bull; <a href="./media/part_a/a3/results.json">Rectification points, matrices, and timings</a></p>
     <p><a href="./src/mosaicing.py">Mosaic and feathering code</a> &bull; <a href="./scripts/part_a4.py">A.4 result generation</a></p>
     <p><a href="./src/harris.py">Supplied Harris code</a> &bull; <a href="./src/features.py">ANMS code</a> &bull; <a href="./scripts/part_b1.py">B.1 result generation</a></p>
+    <p><a href="./src/features.py">Feature descriptor code</a> &bull; <a href="./scripts/part_b2.py">B.2 result generation</a></p>
   </section>
 
   <footer><p>Jerry Kang &bull; SYDE 671 &bull; University of Waterloo</p></footer>

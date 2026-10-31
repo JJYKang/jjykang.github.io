@@ -1,0 +1,79 @@
+{
+  "sigma": 2.0,
+  "patch_size": 40,
+  "descriptor_size": 8,
+  "sample_step": 5,
+  "records": [
+    {
+      "image": 1,
+      "source": "mosaic3-1.jpg",
+      "count": 500,
+      "max_abs_mean": 1.0852430065710905e-14,
+      "max_std_error": 2.220446049250313e-16
+    },
+    {
+      "image": 2,
+      "source": "mosaic3-2.jpg",
+      "count": 500,
+      "max_abs_mean": 1.099120794378905e-14,
+      "max_std_error": 2.220446049250313e-16
+    },
+    {
+      "image": 3,
+      "source": "mosaic3-3.jpg",
+      "count": 500,
+      "max_abs_mean": 5.6690763194922056e-15,
+      "max_std_error": 2.220446049250313e-16
+    }
+  ],
+  "examples": [
+    {
+      "number": 1,
+      "descriptor_index": 63,
+      "point": [
+        264,
+        281
+      ]
+    },
+    {
+      "number": 2,
+      "descriptor_index": 292,
+      "point": [
+        639,
+        342
+      ]
+    },
+    {
+      "number": 3,
+      "descriptor_index": 235,
+      "point": [
+        764,
+        409
+      ]
+    },
+    {
+      "number": 4,
+      "descriptor_index": 133,
+      "point": [
+        544,
+        430
+      ]
+    },
+    {
+      "number": 5,
+      "descriptor_index": 195,
+      "point": [
+        522,
+        636
+      ]
+    },
+    {
+      "number": 6,
+      "descriptor_index": 437,
+      "point": [
+        862,
+        258
+      ]
+    }
+  ]
+}

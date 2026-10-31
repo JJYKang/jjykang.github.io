@@ -7,6 +7,7 @@
 - `media/part_a/a3/`: rectification inputs, interpolation comparisons, and timings.
 - `media/part_a/a4/`: clinic mosaic, direct overlay, and cropped webpage views.
 - `media/part_b/b1/`: Harris/ANMS overlays and saved corner coordinates.
+- `media/part_b/b2/`: normalized descriptors and six illustrated features.
 - `index.html`, `style.css`, `page.js`: static assignment webpage.
 
 From inside `3/`:
@@ -17,6 +18,7 @@ python scripts/part_a2.py
 python scripts/part_a3.py
 python scripts/part_a4.py
 python scripts/part_b1.py
+python scripts/part_b2.py
 ```
 
 The script also runs from the portfolio root with `python 3/scripts/part_a2.py`.
@@ -44,3 +46,11 @@ B.1 uses the supplied `src/harris.py` on 1024x768 grayscale images, with a
 factor 0.9 and selects 500 corners per image. Each `.npz` saves n-by-2 `(x, y)`
 points, strengths, suppression radii, selected indices, and image dimensions for
 the descriptor stage. The supplied Harris file is preserved unchanged.
+
+B.2 reads the saved B.1 corners, extracts 40x40 grayscale windows, applies a
+Gaussian with sigma 2 and reflected boundaries, and samples every fifth pixel
+starting at patch index 2 to form 8x8 descriptors. Each descriptor is normalized
+to zero mean and unit standard deviation. Border windows and patches with
+standard deviation at most 1e-8 are omitted. Saved `.npz` files contain the
+64-value descriptors, their `(x, y)` points, indices into the ANMS selection,
+and image dimensions. Run B.1 before B.2.
