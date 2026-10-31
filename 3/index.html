@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SYDE 671 Assignment 3 &mdash; Jerry Kang</title>
   <link rel="stylesheet" href="./style.css">
+  <script>
+    window.MathJax = {tex: {inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']]}};
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <script defer src="./media/part_a/a2/results.js"></script>
+  <script defer src="./page.js"></script>
 </head>
 <body>
   <header>
@@ -47,6 +53,45 @@
         <div class="img-caption"><div class="img-title">Image 3</div></div>
       </div>
     </div>
+    <h3 id="homographies">A.2: Recover Homographies</h3>
+    <p>I manually selected 12 corresponding points in the clinic images. Matching numbers mark the same landmark in both views. Coordinates use the original 2048&times;1536 images, with (0, 0) at the top-left and x increasing to the right.</p>
+    <div class="grid-2">
+      <div class="img-card">
+        <a href="./media/part_a/a2/points_1.jpg"><img src="./media/part_a/a2/points_1.jpg" alt="Twelve numbered correspondence points in clinic image 1" width="2048" height="1536" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Image 1</div></div>
+      </div>
+      <div class="img-card">
+        <a href="./media/part_a/a2/points_2.jpg"><img src="./media/part_a/a2/points_2.jpg" alt="The twelve matching numbered points in clinic image 2" width="2048" height="1536" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Image 2</div></div>
+      </div>
+    </div>
+
+    <h4>Solving for H</h4>
+    <p>For a correspondence (x, y) &rarr; (u, v), the projective relation gives two linear equations. Fixing h<sub>33</sub> = 1 leaves eight unknowns:</p>
+    <div class="table-scroll">
+      \[
+      \begin{bmatrix}
+      x &amp; y &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; -ux &amp; -uy \\
+      0 &amp; 0 &amp; 0 &amp; x &amp; y &amp; 1 &amp; -vx &amp; -vy
+      \end{bmatrix}
+      \begin{bmatrix}h_{11}\\h_{12}\\h_{13}\\h_{21}\\h_{22}\\h_{23}\\h_{31}\\h_{32}\end{bmatrix}
+      = \begin{bmatrix}u\\v\end{bmatrix}.
+      \]
+    </div>
+    <p><code>computeH(im1_pts, im2_pts)</code> stacks all 12 pairs into a 24&times;8 system and solves it with <code>np.linalg.lstsq</code>. Before solving, each point set is centered and scaled to a mean distance of &radic;2 from the origin. The resulting matrix is converted back to pixel coordinates and scaled so h<sub>33</sub> = 1.</p>
+
+    <h4>Recovered Homography</h4>
+    <p>This matrix maps Image 1 to Image 2, using \((u, v, 1)^T \sim H(x, y, 1)^T\).</p>
+    <pre><code id="homography-matrix"></code></pre>
+    <p>The reprojection RMSE over the selected points is <span id="reprojection-rmse"></span> pixels in Image 2.</p>
+  </section>
+
+  <section id="reproduce">
+    <h2>Commands to Reproduce Results</h2>
+    <p>Run from inside the <code>3/</code> directory:</p>
+    <pre><code>pip install -r requirements.txt
+python scripts/part_a2.py</code></pre>
+    <p><a href="./src/homography.py">Homography code</a> &bull; <a href="./scripts/part_a2.py">Correspondences and result generation</a> &bull; <a href="./media/part_a/a2/results.json">Saved points and matrix</a></p>
   </section>
 
   <footer><p>Jerry Kang &bull; SYDE 671 &bull; University of Waterloo</p></footer>
