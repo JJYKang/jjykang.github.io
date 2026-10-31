@@ -5,6 +5,7 @@
 - `data/`: original photographs and input data.
 - `media/part_a/a2/`: numbered correspondences, matrix, and reprojection errors.
 - `media/part_a/a3/`: rectification inputs, interpolation comparisons, and timings.
+- `media/part_a/a4/`: clinic mosaic, direct overlay, and cropped webpage views.
 - `index.html`, `style.css`, `page.js`: static assignment webpage.
 
 From inside `3/`:
@@ -13,6 +14,7 @@ From inside `3/`:
 pip install -r requirements.txt
 python scripts/part_a2.py
 python scripts/part_a3.py
+python scripts/part_a4.py
 ```
 
 The script also runs from the portfolio root with `python 3/scripts/part_a2.py`.
@@ -28,3 +30,9 @@ methods with five timed runs after a warm-up and saves the median runtimes.
 The warp functions return `(image, valid_mask, origin)`, with an automatically
 computed canvas by default. Set `output_shape=(height, width)` and optionally
 `origin=(left, top)` to use a fixed destination canvas.
+
+A.4 uses `src/mosaicing.py` to place the two clinic images on one canvas and
+blend them with weights based on distance to each source border. Image 1 is
+the reference. The inputs are resized to 1024x768, and the A.2 homography is
+adjusted to those coordinates. Full transparent canvases and fixed display
+crops are exported; crop coordinates and transforms are in `results.json`.

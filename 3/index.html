@@ -149,14 +149,36 @@
     </table></div>
   </section>
 
+  <section id="mosaicing">
+    <h3>A.4: Blend the Images into a Mosaic</h3>
+    <p>The <a href="#source-images">two clinic photos from A.1</a> are resized to 1024&times;768. Image 1 is the reference, and Image 2 is warped into its coordinates using the inverse of the A.2 homography. Both images are placed on a shared canvas with bilinear interpolation.</p>
+    <p>Each source pixel receives a weight proportional to its distance from the nearest image border. The weights are warped alongside the images, then normalized at each output pixel to form a weighted average:</p>
+    <pre><code>mosaic = (weight1 * image1 + weight2 * image2) / (weight1 + weight2)</code></pre>
+    <div class="stack-sheet">
+      <div class="img-card">
+        <a href="./media/part_a/a4/direct.png"><img src="./media/part_a/a4/direct_crop.png" alt="Direct overlay of the two clinic images with a visible brightness seam" width="2250" height="730" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Direct Overlay</div>Image 2 overwrites Image 1 in the overlap.</div>
+      </div>
+    </div>
+    <div class="stack-sheet">
+      <div class="img-card">
+        <a href="./media/part_a/a4/mosaic.png"><img src="./media/part_a/a4/mosaic_crop.png" alt="Clinic mosaic blended with feathered weighted averaging" width="2250" height="730" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Feathered Mosaic</div>Cropped view. Click for the full canvas.</div>
+      </div>
+    </div>
+    <p>Feathering makes the brightness transition across the sky and facade more gradual. Some doubled edges are visible around the car in the overlap.</p>
+  </section>
+
   <section id="reproduce">
     <h2>Commands to Reproduce Results</h2>
     <p>Run from inside the <code>3/</code> directory:</p>
     <pre><code>pip install -r requirements.txt
 python scripts/part_a2.py
-python scripts/part_a3.py</code></pre>
+python scripts/part_a3.py
+python scripts/part_a4.py</code></pre>
     <p><a href="./src/homography.py">Homography code</a> &bull; <a href="./scripts/part_a2.py">Correspondences and result generation</a> &bull; <a href="./media/part_a/a2/results.json">Saved points and matrix</a></p>
     <p><a href="./src/warping.py">Inverse warping code</a> &bull; <a href="./scripts/part_a3.py">Rectification and result generation</a> &bull; <a href="./media/part_a/a3/results.json">Rectification points, matrices, and timings</a></p>
+    <p><a href="./src/mosaicing.py">Mosaic and feathering code</a> &bull; <a href="./scripts/part_a4.py">A.4 result generation</a></p>
   </section>
 
   <footer><p>Jerry Kang &bull; SYDE 671 &bull; University of Waterloo</p></footer>
