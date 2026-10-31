@@ -17,3 +17,10 @@ for (const record of warping.records) {
   }
   document.getElementById('warp-timings').append(row);
 }
+
+for (const record of window.cornerData.records) {
+  for (const method of ['harris', 'anms']) {
+    document.querySelector(`[data-corner-count="${record.image}-${method}"]`).textContent =
+      record[`${method}_count`].toLocaleString('en-US');
+  }
+}

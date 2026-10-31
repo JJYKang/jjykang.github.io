@@ -6,6 +6,7 @@
 - `media/part_a/a2/`: numbered correspondences, matrix, and reprojection errors.
 - `media/part_a/a3/`: rectification inputs, interpolation comparisons, and timings.
 - `media/part_a/a4/`: clinic mosaic, direct overlay, and cropped webpage views.
+- `media/part_b/b1/`: Harris/ANMS overlays and saved corner coordinates.
 - `index.html`, `style.css`, `page.js`: static assignment webpage.
 
 From inside `3/`:
@@ -15,6 +16,7 @@ pip install -r requirements.txt
 python scripts/part_a2.py
 python scripts/part_a3.py
 python scripts/part_a4.py
+python scripts/part_b1.py
 ```
 
 The script also runs from the portfolio root with `python 3/scripts/part_a2.py`.
@@ -36,3 +38,9 @@ blend them with weights based on distance to each source border. Image 1 is
 the reference. The inputs are resized to 1024x768, and the A.2 homography is
 adjusted to those coordinates. Full transparent canvases and fixed display
 crops are exported; crop coordinates and transforms are in `results.json`.
+
+B.1 uses the supplied `src/harris.py` on 1024x768 grayscale images, with a
+20-pixel boundary exclusion. `src/features.py` implements ANMS with robustness
+factor 0.9 and selects 500 corners per image. Each `.npz` saves n-by-2 `(x, y)`
+points, strengths, suppression radii, selected indices, and image dimensions for
+the descriptor stage. The supplied Harris file is preserved unchanged.

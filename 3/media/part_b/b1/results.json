@@ -1,0 +1,38 @@
+{
+  "max_dimension": 1024,
+  "edge_discard": 20,
+  "count": 500,
+  "c_robust": 0.9,
+  "records": [
+    {
+      "image": 1,
+      "source": "mosaic3-1.jpg",
+      "shape": [
+        768,
+        1024
+      ],
+      "harris_count": 18222,
+      "anms_count": 500
+    },
+    {
+      "image": 2,
+      "source": "mosaic3-2.jpg",
+      "shape": [
+        768,
+        1024
+      ],
+      "harris_count": 17684,
+      "anms_count": 500
+    },
+    {
+      "image": 3,
+      "source": "mosaic3-3.jpg",
+      "shape": [
+        768,
+        1024
+      ],
+      "harris_count": 18115,
+      "anms_count": 500
+    }
+  ]
+}

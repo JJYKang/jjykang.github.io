@@ -11,6 +11,7 @@
   <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
   <script defer src="./media/part_a/a2/results.js"></script>
   <script defer src="./media/part_a/a3/results.js"></script>
+  <script defer src="./media/part_b/b1/results.js"></script>
   <script defer src="./page.js"></script>
 </head>
 <body>
@@ -169,16 +170,59 @@
     <p>Feathering makes the brightness transition across the sky and facade more gradual. Some doubled edges are visible around the car in the overlap.</p>
   </section>
 
+  <section id="part-b">
+    <h2>Part B: Feature Matching for Autostitching</h2>
+    <h3 id="corners">B.1: Harris Corner Detection</h3>
+    <p>The three house photos are resized to 1024&times;768 and converted to grayscale. The supplied <code>get_harris_corners</code> function detects corners at a single scale with &sigma; = 1 and discards points within 20 pixels of the image boundary.</p>
+    <p>Adaptive non-maximal suppression (ANMS) assigns each corner a radius equal to its distance from the nearest sufficiently stronger corner, using <code>strength[i] &lt; 0.9 * strength[j]</code>. The 500 corners with the largest radii are retained, following <a href="https://www.microsoft.com/en-us/research/wp-content/uploads/2005/06/cvpr05.pdf">Brown et al., Section 3</a>.</p>
+
+    <h4>Image 1</h4>
+    <div class="grid-2">
+      <div class="img-card">
+        <a href="./media/part_b/b1/image_1_harris.jpg"><img src="./media/part_b/b1/image_1_harris.jpg" alt="Harris corners overlaid on house image 1" width="1024" height="768" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Harris Corners</div><span data-corner-count="1-harris"></span> points.</div>
+      </div>
+      <div class="img-card">
+        <a href="./media/part_b/b1/image_1_anms.jpg"><img src="./media/part_b/b1/image_1_anms.jpg" alt="Corners retained by ANMS on house image 1" width="1024" height="768" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">After ANMS</div><span data-corner-count="1-anms"></span> points.</div>
+      </div>
+    </div>
+    <h4>Image 2</h4>
+    <div class="grid-2">
+      <div class="img-card">
+        <a href="./media/part_b/b1/image_2_harris.jpg"><img src="./media/part_b/b1/image_2_harris.jpg" alt="Harris corners overlaid on house image 2" width="1024" height="768" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Harris Corners</div><span data-corner-count="2-harris"></span> points.</div>
+      </div>
+      <div class="img-card">
+        <a href="./media/part_b/b1/image_2_anms.jpg"><img src="./media/part_b/b1/image_2_anms.jpg" alt="Corners retained by ANMS on house image 2" width="1024" height="768" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">After ANMS</div><span data-corner-count="2-anms"></span> points.</div>
+      </div>
+    </div>
+    <h4>Image 3</h4>
+    <div class="grid-2">
+      <div class="img-card">
+        <a href="./media/part_b/b1/image_3_harris.jpg"><img src="./media/part_b/b1/image_3_harris.jpg" alt="Harris corners overlaid on house image 3" width="1024" height="768" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Harris Corners</div><span data-corner-count="3-harris"></span> points.</div>
+      </div>
+      <div class="img-card">
+        <a href="./media/part_b/b1/image_3_anms.jpg"><img src="./media/part_b/b1/image_3_anms.jpg" alt="Corners retained by ANMS on house image 3" width="1024" height="768" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">After ANMS</div><span data-corner-count="3-anms"></span> points.</div>
+      </div>
+    </div>
+  </section>
+
   <section id="reproduce">
     <h2>Commands to Reproduce Results</h2>
     <p>Run from inside the <code>3/</code> directory:</p>
     <pre><code>pip install -r requirements.txt
 python scripts/part_a2.py
 python scripts/part_a3.py
-python scripts/part_a4.py</code></pre>
+python scripts/part_a4.py
+python scripts/part_b1.py</code></pre>
     <p><a href="./src/homography.py">Homography code</a> &bull; <a href="./scripts/part_a2.py">Correspondences and result generation</a> &bull; <a href="./media/part_a/a2/results.json">Saved points and matrix</a></p>
     <p><a href="./src/warping.py">Inverse warping code</a> &bull; <a href="./scripts/part_a3.py">Rectification and result generation</a> &bull; <a href="./media/part_a/a3/results.json">Rectification points, matrices, and timings</a></p>
     <p><a href="./src/mosaicing.py">Mosaic and feathering code</a> &bull; <a href="./scripts/part_a4.py">A.4 result generation</a></p>
+    <p><a href="./src/harris.py">Supplied Harris code</a> &bull; <a href="./src/features.py">ANMS code</a> &bull; <a href="./scripts/part_b1.py">B.1 result generation</a></p>
   </section>
 
   <footer><p>Jerry Kang &bull; SYDE 671 &bull; University of Waterloo</p></footer>
