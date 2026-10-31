@@ -24,3 +24,7 @@ for (const record of window.cornerData.records) {
       record[`${method}_count`].toLocaleString('en-US');
   }
 }
+
+for (const record of window.matchData.records) {
+  document.querySelector(`[data-match-count="${record.pair.join('-')}"]`).textContent = record.matches;
+}

@@ -8,6 +8,7 @@
 - `media/part_a/a4/`: clinic mosaic, direct overlay, and cropped webpage views.
 - `media/part_b/b1/`: Harris/ANMS overlays and saved corner coordinates.
 - `media/part_b/b2/`: normalized descriptors and six illustrated features.
+- `media/part_b/b3/`: adjacent-image feature matches and visualizations.
 - `index.html`, `style.css`, `page.js`: static assignment webpage.
 
 From inside `3/`:
@@ -19,6 +20,7 @@ python scripts/part_a3.py
 python scripts/part_a4.py
 python scripts/part_b1.py
 python scripts/part_b2.py
+python scripts/part_b3.py
 ```
 
 The script also runs from the portfolio root with `python 3/scripts/part_a2.py`.
@@ -54,3 +56,9 @@ to zero mean and unit standard deviation. Border windows and patches with
 standard deviation at most 1e-8 are omitted. Saved `.npz` files contain the
 64-value descriptors, their `(x, y)` points, indices into the ANMS selection,
 and image dimensions. Run B.1 before B.2.
+
+B.3 matches Image 1 to Image 2 and Image 2 to Image 3. For each descriptor,
+`match_descriptors` finds the nearest two target descriptors using SSD and
+accepts a nearest/second-nearest SSD ratio below 0.5. Ambiguous duplicate
+neighbors are rejected. Each `.npz` stores matched descriptor indices, ratios,
+and paired `(x, y)` coordinates for RANSAC. Run B.2 before B.3.

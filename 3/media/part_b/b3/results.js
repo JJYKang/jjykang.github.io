@@ -1,0 +1,1 @@
+window.matchData = {"ratio_threshold": 0.5, "distance": "SSD", "records": [{"pair": [1, 2], "queries": 500, "matches": 70, "median_ratio": 0.3047325975815274}, {"pair": [2, 3], "queries": 500, "matches": 71, "median_ratio": 0.3324144622668868}]};

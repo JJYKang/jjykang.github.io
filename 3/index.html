@@ -12,6 +12,7 @@
   <script defer src="./media/part_a/a2/results.js"></script>
   <script defer src="./media/part_a/a3/results.js"></script>
   <script defer src="./media/part_b/b1/results.js"></script>
+  <script defer src="./media/part_b/b3/results.js"></script>
   <script defer src="./page.js"></script>
 </head>
 <body>
@@ -225,6 +226,22 @@
         <div class="img-caption"><div class="img-title">Source Patches and Descriptors</div>Normalized values use a shared grayscale range of &minus;3 to 3.</div>
       </div>
     </div>
+    <h3 id="matching">B.3: Feature Matching</h3>
+    <p>For each descriptor, find its two nearest neighbors in the next image using the sum of squared differences (SSD). Keep the closest match when its SSD is less than half that of the second-closest match, using the ratio test in <a href="https://www.microsoft.com/en-us/research/wp-content/uploads/2005/06/cvpr05.pdf">Brown et al., Figure 6b</a>.</p>
+    <pre><code>SSD = sum((descriptor1 - descriptor2)**2)
+accept = nearest_SSD / second_nearest_SSD &lt; 0.5</code></pre>
+    <div class="stack-sheet">
+      <div class="img-card">
+        <a href="./media/part_b/b3/pair_1_2_matches.jpg"><img src="./media/part_b/b3/pair_1_2_matches.jpg" alt="Matched features connected by colored lines between house images 1 and 2" width="2068" height="768" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Images 1 and 2</div><span data-match-count="1-2"></span> matches.</div>
+      </div>
+    </div>
+    <div class="stack-sheet">
+      <div class="img-card">
+        <a href="./media/part_b/b3/pair_2_3_matches.jpg"><img src="./media/part_b/b3/pair_2_3_matches.jpg" alt="Matched features connected by colored lines between house images 2 and 3" width="2068" height="768" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Images 2 and 3</div><span data-match-count="2-3"></span> matches.</div>
+      </div>
+    </div>
   </section>
 
   <section id="reproduce">
@@ -235,12 +252,14 @@ python scripts/part_a2.py
 python scripts/part_a3.py
 python scripts/part_a4.py
 python scripts/part_b1.py
-python scripts/part_b2.py</code></pre>
+python scripts/part_b2.py
+python scripts/part_b3.py</code></pre>
     <p><a href="./src/homography.py">Homography code</a> &bull; <a href="./scripts/part_a2.py">Correspondences and result generation</a> &bull; <a href="./media/part_a/a2/results.json">Saved points and matrix</a></p>
     <p><a href="./src/warping.py">Inverse warping code</a> &bull; <a href="./scripts/part_a3.py">Rectification and result generation</a> &bull; <a href="./media/part_a/a3/results.json">Rectification points, matrices, and timings</a></p>
     <p><a href="./src/mosaicing.py">Mosaic and feathering code</a> &bull; <a href="./scripts/part_a4.py">A.4 result generation</a></p>
     <p><a href="./src/harris.py">Supplied Harris code</a> &bull; <a href="./src/features.py">ANMS code</a> &bull; <a href="./scripts/part_b1.py">B.1 result generation</a></p>
     <p><a href="./src/features.py">Feature descriptor code</a> &bull; <a href="./scripts/part_b2.py">B.2 result generation</a></p>
+    <p><a href="./src/features.py">Feature matching code</a> &bull; <a href="./scripts/part_b3.py">B.3 result generation</a></p>
   </section>
 
   <footer><p>Jerry Kang &bull; SYDE 671 &bull; University of Waterloo</p></footer>

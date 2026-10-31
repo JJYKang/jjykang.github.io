@@ -70,3 +70,30 @@ def extract_descriptors(image, points, sigma=2.0, min_std=1e-8):
         descriptors.append(centered / std)
         indices.append(index)
     return np.asarray(descriptors, dtype=float).reshape(-1, 64), np.asarray(indices, dtype=int)
+
+
+def match_descriptors(descriptors1, descriptors2, ratio_threshold=0.5):
+    """Return matching index pairs and their nearest/second-nearest SSD ratios.
+
+    Query each descriptor in the first image against the second image. Accept
+    a match when its SSD ratio is strictly below ratio_threshold. Two identical
+    nearest descriptors give an ambiguous match and are rejected.
+    """
+    a = np.asarray(descriptors1, dtype=float)
+    b = np.asarray(descriptors2, dtype=float)
+    if a.ndim != 2 or b.ndim != 2 or a.shape[1] != b.shape[1] or a.shape[1] == 0:
+        raise ValueError("Provide two descriptor matrices with the same feature dimension")
+    if not np.isfinite(a).all() or not np.isfinite(b).all() or not 0 < ratio_threshold < 1:
+        raise ValueError("Descriptors must be finite and 0 < ratio_threshold < 1")
+    if len(a) == 0 or len(b) < 2:
+        return np.empty((0, 2), dtype=int), np.empty(0, dtype=float)
+    # Squared distances without allocating an n-by-m-by-64 difference array.
+    distances = np.maximum(np.sum(a * a, axis=1)[:, None]
+                           + np.sum(b * b, axis=1)[None, :] - 2 * (a @ b.T), 0)
+    nearest = np.argsort(distances, axis=1, kind="stable")[:, :2]
+    rows = np.arange(len(a))
+    first = distances[rows, nearest[:, 0]]
+    second = distances[rows, nearest[:, 1]]
+    ratios = np.divide(first, second, out=np.full(len(a), np.inf), where=second > 1e-12)
+    keep = ratios < ratio_threshold
+    return np.column_stack((rows[keep], nearest[keep, 0])), ratios[keep]
