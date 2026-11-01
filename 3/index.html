@@ -13,6 +13,7 @@
   <script defer src="./media/part_a/a3/results.js"></script>
   <script defer src="./media/part_b/b1/results.js"></script>
   <script defer src="./media/part_b/b3/results.js"></script>
+  <script defer src="./media/part_b/b4/results.js"></script>
   <script defer src="./page.js"></script>
 </head>
 <body>
@@ -242,6 +243,49 @@ accept = nearest_SSD / second_nearest_SSD &lt; 0.5</code></pre>
         <div class="img-caption"><div class="img-title">Images 2 and 3</div><span data-match-count="2-3"></span> matches.</div>
       </div>
     </div>
+    <h3 id="ransac">B.4: RANSAC for Robust Homography</h3>
+    <ol>
+      <li><strong>Sample:</strong> Randomly choose four matching pairs and estimate a homography with <code>computeH</code>. Collinear samples are discarded.</li>
+      <li><strong>Score:</strong> Transform all matched points and count inliers with a reprojection error below 3 pixels. Keep the model with the most inliers, breaking ties by median error.</li>
+      <li><strong>Refine:</strong> Refit the homography using the inliers and update the consensus. Sampling uses a fixed seed and a 99.9% confidence target, with a maximum of 5,000 trials.</li>
+    </ol>
+    <div class="table-scroll"><table>
+      <thead><tr><th scope="col">Image Pair</th><th scope="col">Matches</th><th scope="col">Inliers</th><th scope="col">Inlier RMSE (px)</th></tr></thead>
+      <tbody id="ransac-results"></tbody>
+    </table></div>
+    <div class="stack-sheet">
+      <div class="img-card">
+        <a href="./media/part_b/b4/pair_1_2_inliers.jpg"><img src="./media/part_b/b4/pair_1_2_inliers.jpg" alt="RANSAC inlier correspondences between house images 1 and 2" width="2068" height="768" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Images 1 and 2: RANSAC Inliers</div></div>
+      </div>
+    </div>
+    <div class="stack-sheet">
+      <div class="img-card">
+        <a href="./media/part_b/b4/pair_2_3_inliers.jpg"><img src="./media/part_b/b4/pair_2_3_inliers.jpg" alt="RANSAC inlier correspondences between house images 2 and 3" width="2068" height="768" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Images 2 and 3: RANSAC Inliers</div></div>
+      </div>
+    </div>
+
+    <h4>Manual and Automatic Stitching</h4>
+    <p>The manual mosaic uses hand-selected correspondences, and the automatic mosaic uses the RANSAC estimates. Both use Image 2 as the reference, bilinear interpolation, and the feathered blending from A.4. The comparison shows the same crop in reference-image coordinates.</p>
+    <div class="grid-2">
+      <div class="img-card">
+        <a href="./media/part_b/b4/manual_mosaic.png"><img src="./media/part_b/b4/manual_comparison.png" alt="Three-image house mosaic using manually selected correspondences" width="1850" height="550" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Manual</div></div>
+      </div>
+      <div class="img-card">
+        <a href="./media/part_b/b4/automatic_mosaic.png"><img src="./media/part_b/b4/automatic_comparison.png" alt="Same crop of the house mosaic using automatically matched RANSAC inliers" width="1850" height="550" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Automatic</div></div>
+      </div>
+    </div>
+    <p>The automatic result aligns the driveway joins more closely. Doubled edges are visible around the upper windows and rooflines.</p>
+    <h4>Three-Image Automatic Mosaic</h4>
+    <div class="stack-sheet">
+      <div class="img-card">
+        <a href="./media/part_b/b4/automatic_mosaic.png"><img src="./media/part_b/b4/automatic_crop.png" alt="Automatically stitched panorama from all three house photos" width="2800" height="600" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Automatic House Mosaic</div>Cropped view. Click for the full canvas.</div>
+      </div>
+    </div>
   </section>
 
   <section id="reproduce">
@@ -253,13 +297,15 @@ python scripts/part_a3.py
 python scripts/part_a4.py
 python scripts/part_b1.py
 python scripts/part_b2.py
-python scripts/part_b3.py</code></pre>
+python scripts/part_b3.py
+python scripts/part_b4.py</code></pre>
     <p><a href="./src/homography.py">Homography code</a> &bull; <a href="./scripts/part_a2.py">Correspondences and result generation</a> &bull; <a href="./media/part_a/a2/results.json">Saved points and matrix</a></p>
     <p><a href="./src/warping.py">Inverse warping code</a> &bull; <a href="./scripts/part_a3.py">Rectification and result generation</a> &bull; <a href="./media/part_a/a3/results.json">Rectification points, matrices, and timings</a></p>
     <p><a href="./src/mosaicing.py">Mosaic and feathering code</a> &bull; <a href="./scripts/part_a4.py">A.4 result generation</a></p>
     <p><a href="./src/harris.py">Supplied Harris code</a> &bull; <a href="./src/features.py">ANMS code</a> &bull; <a href="./scripts/part_b1.py">B.1 result generation</a></p>
     <p><a href="./src/features.py">Feature descriptor code</a> &bull; <a href="./scripts/part_b2.py">B.2 result generation</a></p>
     <p><a href="./src/features.py">Feature matching code</a> &bull; <a href="./scripts/part_b3.py">B.3 result generation</a></p>
+    <p><a href="./src/ransac.py">RANSAC code</a> &bull; <a href="./scripts/part_b4.py">B.4 result generation and manual correspondences</a> &bull; <a href="./media/part_b/b4/results.json">Saved matrices and measurements</a></p>
   </section>
 
   <footer><p>Jerry Kang &bull; SYDE 671 &bull; University of Waterloo</p></footer>

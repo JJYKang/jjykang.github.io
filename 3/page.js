@@ -28,3 +28,13 @@ for (const record of window.cornerData.records) {
 for (const record of window.matchData.records) {
   document.querySelector(`[data-match-count="${record.pair.join('-')}"]`).textContent = record.matches;
 }
+
+for (const record of window.ransacData.records) {
+  const row = document.createElement('tr');
+  for (const value of [record.pair.join('–'), record.matches, record.inliers, record.rmse_px.toFixed(2)]) {
+    const cell = document.createElement('td');
+    cell.textContent = value;
+    row.append(cell);
+  }
+  document.getElementById('ransac-results').append(row);
+}

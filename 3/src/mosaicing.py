@@ -11,21 +11,28 @@ def feather_weights(shape):
     return distance / distance.max()
 
 
-def create_mosaic(images, homographies):
+def create_mosaic(images, homographies, output_shape=None, origin=None):
     """Map RGB images to a shared projection and return blended and direct results.
 
     Each homography maps one source to the reference coordinate system.
+    Set output_shape and origin to compare mosaics on a fixed canvas.
     Returns (blended, direct, valid_mask, origin). The direct comparison lets
     later images overwrite earlier images wherever their validity masks overlap.
     """
     if len(images) != len(homographies) or not images:
         raise ValueError("Provide one homography per image")
-    bounds = [warp_bounds(image.shape, h) for image, h in zip(images, homographies)]
-    left = min(origin[0] for shape, origin in bounds)
-    top = min(origin[1] for shape, origin in bounds)
-    right = max(origin[0] + shape[1] for shape, origin in bounds)
-    bottom = max(origin[1] + shape[0] for shape, origin in bounds)
-    shape, origin = (bottom - top, right - left), (left, top)
+    if output_shape is None:
+        if origin is not None:
+            raise ValueError("Specify output_shape when specifying origin")
+        bounds = [warp_bounds(image.shape, h) for image, h in zip(images, homographies)]
+        left = min(point[0] for shape, point in bounds)
+        top = min(point[1] for shape, point in bounds)
+        right = max(point[0] + shape[1] for shape, point in bounds)
+        bottom = max(point[1] + shape[0] for shape, point in bounds)
+        output_shape, origin = (bottom - top, right - left), (left, top)
+    elif origin is None:
+        origin = (0, 0)
+    shape = output_shape
     weighted = np.zeros(shape + (3,), dtype=float)
     total_weight = np.zeros(shape, dtype=float)
     direct = np.zeros_like(weighted)

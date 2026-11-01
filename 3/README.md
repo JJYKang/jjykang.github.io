@@ -9,6 +9,7 @@
 - `media/part_b/b1/`: Harris/ANMS overlays and saved corner coordinates.
 - `media/part_b/b2/`: normalized descriptors and six illustrated features.
 - `media/part_b/b3/`: adjacent-image feature matches and visualizations.
+- `media/part_b/b4/`: RANSAC inliers, manual/automatic mosaics, and comparisons.
 - `index.html`, `style.css`, `page.js`: static assignment webpage.
 
 From inside `3/`:
@@ -21,6 +22,7 @@ python scripts/part_a4.py
 python scripts/part_b1.py
 python scripts/part_b2.py
 python scripts/part_b3.py
+python scripts/part_b4.py
 ```
 
 The script also runs from the portfolio root with `python 3/scripts/part_a2.py`.
@@ -62,3 +64,13 @@ B.3 matches Image 1 to Image 2 and Image 2 to Image 3. For each descriptor,
 accepts a nearest/second-nearest SSD ratio below 0.5. Ambiguous duplicate
 neighbors are rejected. Each `.npz` stores matched descriptor indices, ratios,
 and paired `(x, y)` coordinates for RANSAC. Run B.2 before B.3.
+
+B.4 implements four-point RANSAC in `src/ransac.py` with a 3-pixel forward
+reprojection threshold, seed 671, confidence 0.999, and a 5,000-trial cap.
+Collinear samples are skipped, and the selected consensus is refined by
+least-squares fitting. Image 2 is the reference for the three-image mosaic:
+Image 1 uses H12 and Image 3 uses inverse(H23). Both the automatic result and
+a manual baseline use the same canvas, bilinear interpolation, and feathering.
+The manual points are fixed in `scripts/part_b4.py` at 1024x768. Saved outputs
+include inlier masks, errors, matrices, and full canvases; webpage views use
+fixed crops in reference-image coordinates. Run B.3 before B.4.
