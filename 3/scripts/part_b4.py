@@ -19,21 +19,22 @@ THRESHOLD = 3.0
 MAX_ITERATIONS = 5000
 CONFIDENCE = 0.999
 SEED = 671
-COMPARISON_VIEW = (-500, 150, 1350, 700)  # Reference-image coordinates.
-AUTOMATIC_VIEW = (-600, 100, 2200, 700)
-# Manually selected landmarks at 1024x768, independent of automatic matches.
+COMPARISON_VIEW = (-500, 120, 1450, 700)  # Reference-image coordinates.
+AUTOMATIC_VIEW = (-550, 75, 1550, 700)
+# Manually paired landmarks at 1024x768, checked in enlarged source crops.
+# Local Harris corners provide precise positions for the selected landmarks.
 # Each source is mapped to the reference image 2.
 MANUAL = {
-    1: (np.array([[608,282],[609,365],[478,379],[563,377],[478,434],
-                  [563,434],[694,317],[678,442],[750,375],[751,480]], dtype=float),
-        np.array([[257,266],[257,354],[94,375],[202,375],[94,435],
-                  [202,435],[351,318],[336,440],[395,376],[397,471]], dtype=float)),
-    3: (np.array([[194,255],[248,259],[194,293],[248,297],[352,264],
-                  [416,268],[352,308],[416,312],[176,364],[246,369],
-                  [336,371],[415,375]], dtype=float),
-        np.array([[615,263],[664,262],[615,299],[664,299],[764,260],
-                  [823,260],[764,299],[823,298],[600,366],[671,367],
-                  [743,369],[818,369]], dtype=float)),
+    1: (np.array([[608,154],[393,251],[457,244],[504,237],
+                  [549,234],[374,376],[475,373],[368,437]], dtype=float),
+        np.array([[347,167],[87,235],[173,237],[227,234],
+                  [284,235],[53,378],[191,382],[43,451]], dtype=float)),
+    3: (np.array([[530,248],[580,251],[524,294],[584,298],[625,258],
+                  [440,343],[532,374],[576,376],[533,493],[570,493],
+                  [606,385],[643,393],[644,447]], dtype=float),
+        np.array([[805,238],[865,238],[800,288],[869,283],[923,235],
+                  [705,347],[812,375],[866,375],[818,506],[863,507],
+                  [905,384],[956,388],[956,455]], dtype=float)),
 }
 
 

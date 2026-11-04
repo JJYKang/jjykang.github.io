@@ -8,8 +8,8 @@
         2
       ],
       "queries": 500,
-      "matches": 70,
-      "median_ratio": 0.3047325975815274
+      "matches": 76,
+      "median_ratio": 0.23736198623199672
     },
     {
       "pair": [
@@ -17,8 +17,8 @@
         3
       ],
       "queries": 500,
-      "matches": 71,
-      "median_ratio": 0.3324144622668868
+      "matches": 89,
+      "median_ratio": 0.25091277894335173
     }
   ]
 }

@@ -8,71 +8,71 @@
       "image": 1,
       "source": "mosaic3-1.jpg",
       "count": 500,
-      "max_abs_mean": 1.0852430065710905e-14,
+      "max_abs_mean": 1.669497873280079e-14,
       "max_std_error": 2.220446049250313e-16
     },
     {
       "image": 2,
       "source": "mosaic3-2.jpg",
       "count": 500,
-      "max_abs_mean": 1.099120794378905e-14,
+      "max_abs_mean": 1.63202784619898e-14,
       "max_std_error": 2.220446049250313e-16
     },
     {
       "image": 3,
       "source": "mosaic3-3.jpg",
       "count": 500,
-      "max_abs_mean": 5.6690763194922056e-15,
+      "max_abs_mean": 1.2434497875801753e-14,
       "max_std_error": 2.220446049250313e-16
     }
   ],
   "examples": [
     {
       "number": 1,
-      "descriptor_index": 63,
+      "descriptor_index": 24,
       "point": [
-        264,
-        281
+        277,
+        277
       ]
     },
     {
       "number": 2,
-      "descriptor_index": 292,
+      "descriptor_index": 210,
       "point": [
-        639,
-        342
+        584,
+        321
       ]
     },
     {
       "number": 3,
-      "descriptor_index": 235,
+      "descriptor_index": 463,
       "point": [
-        764,
-        409
+        738,
+        421
       ]
     },
     {
       "number": 4,
-      "descriptor_index": 133,
+      "descriptor_index": 488,
       "point": [
-        544,
-        430
+        560,
+        487
       ]
     },
     {
       "number": 5,
-      "descriptor_index": 195,
+      "descriptor_index": 336,
       "point": [
-        522,
-        636
+        496,
+        638
       ]
     },
     {
       "number": 6,
-      "descriptor_index": 437,
+      "descriptor_index": 202,
       "point": [
-        862,
-        258
+        831,
+        238
       ]
     }
   ]

@@ -32,8 +32,9 @@ coordinates are `(x, y)` from the top-left pixel center. Generated results
 include `results.json` and `results.js`, which supplies the webpage matrix
 and RMSE without a Python runtime on GitHub Pages.
 
-The A.3 script uses four manually selected corners in each of two source images
-and maps them to fixed output rectangles. It benchmarks both interpolation
+The A.3 script reads `data/rectification-1.jpg` (Arc Therapeutics sign) and
+`data/rectification-2.jpg` (house window). Four manually selected corners map
+the sign to 600x600 and the window to 900x600. It benchmarks both interpolation
 methods with five timed runs after a warm-up and saves the median runtimes.
 The warp functions return `(image, valid_mask, origin)`, with an automatically
 computed canvas by default. Set `output_shape=(height, width)` and optionally
@@ -71,6 +72,8 @@ Collinear samples are skipped, and the selected consensus is refined by
 least-squares fitting. Image 2 is the reference for the three-image mosaic:
 Image 1 uses H12 and Image 3 uses inverse(H23). Both the automatic result and
 a manual baseline use the same canvas, bilinear interpolation, and feathering.
-The manual points are fixed in `scripts/part_b4.py` at 1024x768. Saved outputs
+The manual landmark pairs are fixed in `scripts/part_b4.py` at 1024x768,
+with positions checked in enlarged crops and selected using local Harris corners.
+Saved outputs
 include inlier masks, errors, matrices, and full canvases; webpage views use
 fixed crops in reference-image coordinates. Run B.3 before B.4.

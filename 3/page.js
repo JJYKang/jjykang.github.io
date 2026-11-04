@@ -8,7 +8,7 @@ const warping = window.warpingData;
 document.getElementById('warp-repeats').textContent = warping.repeats;
 for (const record of warping.records) {
   const row = document.createElement('tr');
-  const name = record.name === 'sign' ? 'Clinic sign' : 'House window';
+  const name = record.name === 'sign' ? 'Therapeutics sign' : 'House window';
   for (const value of [name, `${record.output_shape[1]}×${record.output_shape[0]}`,
     record.milliseconds.nearest.toFixed(2), record.milliseconds.bilinear.toFixed(2)]) {
     const cell = document.createElement('td');

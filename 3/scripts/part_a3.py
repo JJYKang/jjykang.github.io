@@ -17,10 +17,10 @@ REPEATS = 5
 # Corners in original images: top-left, top-right, bottom-right, bottom-left.
 # Destination rectangles set the displayed width and height of each object.
 EXAMPLES = [
-    ("sign", "mosaic2-2.jpg", [[1369, 594], [1660, 605], [1657, 761], [1368, 762]],
-     (340, 600), (180, 80, 300, 160)),
-    ("window", "mosaic3-1.jpg", [[953, 754], [1126, 746], [1128, 868], [954, 871]],
-     (400, 600), (80, 160, 200, 240)),
+    ("sign", "rectification-1.jpg", [[740, 274], [1583, 459], [1583, 1029], [761, 1246]],
+     (600, 600), (90, 435, 210, 515)),
+    ("window", "rectification-2.jpg", [[489, 516], [1512, 191], [1529, 1278], [470, 1051]],
+     (600, 900), (150, 200, 270, 280)),
 ]
 
 

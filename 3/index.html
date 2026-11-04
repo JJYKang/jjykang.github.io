@@ -42,18 +42,18 @@
     </div>
 
     <h4>Set 2: Houses</h4>
-    <p>Three photos of neighboring houses with Halloween decorations.</p>
+    <p>Three photos of neighboring semi-detached houses and their shared driveway.</p>
     <div class="grid-3">
       <div class="img-card">
         <img src="./data/mosaic3-1.jpg" alt="Left view of the houses and driveways" width="2048" height="1536" loading="lazy">
         <div class="img-caption"><div class="img-title">Image 1</div></div>
       </div>
       <div class="img-card">
-        <img src="./data/mosaic3-2.jpg" alt="Middle view of the houses with a large tree on the right" width="2048" height="1536" loading="lazy">
+        <img src="./data/mosaic3-2.jpg" alt="Middle view of the houses and shared driveway" width="2048" height="1536" loading="lazy">
         <div class="img-caption"><div class="img-title">Image 2</div></div>
       </div>
       <div class="img-card">
-        <img src="./data/mosaic3-3.jpg" alt="Right view of the houses and Halloween decorations" width="2048" height="1536" loading="lazy">
+        <img src="./data/mosaic3-3.jpg" alt="Right view of the white-sided house and driveway" width="2048" height="1536" loading="lazy">
         <div class="img-caption"><div class="img-title">Image 3</div></div>
       </div>
     </div>
@@ -71,7 +71,14 @@
     </div>
 
     <h4>Solving for H</h4>
-    <p>For a correspondence (x, y) &rarr; (u, v), the projective relation gives two linear equations. Fixing h<sub>33</sub> = 1 leaves eight unknowns:</p>
+    <p>Each correspondence supplies two constraints on the homography. Using more than four pairs gives an overdetermined system, so least-squares fitting can reduce sensitivity to point-selection errors. With h<sub>33</sub> = 1, the projective coordinates are:</p>
+    <div class="table-scroll">
+      \[
+      u = \frac{h_{11}x+h_{12}y+h_{13}}{h_{31}x+h_{32}y+1},\qquad
+      v = \frac{h_{21}x+h_{22}y+h_{23}}{h_{31}x+h_{32}y+1}.
+      \]
+    </div>
+    <p>Multiplying by the denominator and collecting the eight unknown entries of H gives:</p>
     <div class="table-scroll">
       \[
       \begin{bmatrix}
@@ -82,7 +89,11 @@
       = \begin{bmatrix}u\\v\end{bmatrix}.
       \]
     </div>
-    <p><code>computeH(im1_pts, im2_pts)</code> stacks all 12 pairs into a 24&times;8 system and solves it with <code>np.linalg.lstsq</code>. Before solving, each point set is centered and scaled to a mean distance of &radic;2 from the origin. The resulting matrix is converted back to pixel coordinates and scaled so h<sub>33</sub> = 1.</p>
+    <ol>
+      <li><strong>Normalize:</strong> Center each point set and scale its mean distance from the origin to &radic;2. This keeps the coordinate magnitudes comparable and improves numerical conditioning.</li>
+      <li><strong>Solve:</strong> Stack the two equations from each pair into a 24&times;8 system and solve with <code>np.linalg.lstsq</code>.</li>
+      <li><strong>Recover pixel coordinates:</strong> Undo the coordinate normalization and scale the resulting matrix so h<sub>33</sub> = 1.</li>
+    </ol>
 
     <h4>Recovered Homography</h4>
     <p>This matrix maps Image 1 to Image 2, using \((u, v, 1)^T \sim H(x, y, 1)^T\).</p>
@@ -90,7 +101,8 @@
     <p>The reprojection RMSE over the selected points is <span id="reprojection-rmse"></span> pixels in Image 2.</p>
 
     <h3 id="warping">A.3: Warp the Images</h3>
-    <p>For each output pixel, apply H<sup>&minus;1</sup> and divide by the homogeneous coordinate to find its position in the source image. The default canvas is computed from the four transformed image corners. A separate validity mask records which pixels sample the source image.</p>
+    <p>For rectification, the four selected object corners are mapped to the corners of an output rectangle using <code>computeH</code>. Inverse warping then visits every output pixel, avoiding holes caused by projecting source pixels forward.</p>
+    <p>Apply H<sup>&minus;1</sup> to each output coordinate and divide by its homogeneous coordinate to obtain the source position. The position usually falls between pixels, so its intensity is sampled using one of two methods:</p>
     <ul>
       <li><strong>Nearest neighbor:</strong> Round the source coordinates and copy that pixel.</li>
       <li><strong>Bilinear:</strong> Take the four surrounding pixels and weight them by their horizontal and vertical distances.</li>
@@ -98,26 +110,27 @@
     <p>With fractional offsets a and b from the upper-left neighbor, bilinear interpolation computes:</p>
     <pre><code>(1-a)(1-b) I[y0, x0] + a(1-b) I[y0, x1]
 + (1-a)b I[y1, x0] + ab I[y1, x1]</code></pre>
+    <p>A validity mask marks output pixels whose source positions lie inside the image. Integer coordinates refer to pixel centers.</p>
 
-    <h4>Rectification 1: Clinic Sign</h4>
-    <p>The four marked corners are mapped to a 600&times;340 rectangle.</p>
+    <h4>Rectification 1: Arc Therapeutics Sign</h4>
+    <p>The four marked sign corners are mapped to a 600&times;600 square.</p>
     <div class="grid-3">
       <div class="img-card">
-        <img src="./media/part_a/a3/sign_source.png" alt="Source crop of the clinic sign with four selected corners" loading="lazy">
+        <img src="./media/part_a/a3/sign_source.png" alt="Oblique source crop of the Arc Therapeutics sign with four selected corners" loading="lazy">
         <div class="img-caption"><div class="img-title">Source Crop</div></div>
       </div>
       <div class="img-card">
-        <a href="./media/part_a/a3/sign_nearest.png"><img src="./media/part_a/a3/sign_nearest.png" alt="Clinic sign rectified with nearest-neighbor interpolation" loading="lazy"></a>
+        <a href="./media/part_a/a3/sign_nearest.png"><img src="./media/part_a/a3/sign_nearest.png" alt="Arc Therapeutics sign rectified with nearest-neighbor interpolation" loading="lazy"></a>
         <div class="img-caption"><div class="img-title">Nearest Neighbor</div></div>
       </div>
       <div class="img-card">
-        <a href="./media/part_a/a3/sign_bilinear.png"><img src="./media/part_a/a3/sign_bilinear.png" alt="Clinic sign rectified with bilinear interpolation" loading="lazy"></a>
+        <a href="./media/part_a/a3/sign_bilinear.png"><img src="./media/part_a/a3/sign_bilinear.png" alt="Arc Therapeutics sign rectified with bilinear interpolation" loading="lazy"></a>
         <div class="img-caption"><div class="img-title">Bilinear</div></div>
       </div>
     </div>
 
     <h4>Rectification 2: House Window</h4>
-    <p>The window frame is mapped to a 600&times;400 rectangle.</p>
+    <p>The four outer glass corners of the three-panel window are mapped to a 900&times;600 rectangle.</p>
     <div class="grid-3">
       <div class="img-card">
         <img src="./media/part_a/a3/window_source.png" alt="Source crop of the house window with four selected corners" loading="lazy">
@@ -154,8 +167,12 @@
 
   <section id="mosaicing">
     <h3>A.4: Blend the Images into a Mosaic</h3>
-    <p>The <a href="#source-images">two clinic photos from A.1</a> are resized to 1024&times;768. Image 1 is the reference, and Image 2 is warped into its coordinates using the inverse of the A.2 homography. Both images are placed on a shared canvas with bilinear interpolation.</p>
-    <p>Each source pixel receives a weight proportional to its distance from the nearest image border. The weights are warped alongside the images, then normalized at each output pixel to form a weighted average:</p>
+    <p>The <a href="#source-images">two clinic photos from A.1</a> are reduced to 1024&times;768 with Lanczos resampling to limit aliasing. Image 1 is the reference; the inverse of the A.2 homography maps Image 2 into its coordinates, with the matrix adjusted for the resized inputs.</p>
+    <ol>
+      <li><strong>Set the canvas:</strong> Transform each image's four corners and take the combined bounding box. Its minimum coordinates give the canvas origin.</li>
+      <li><strong>Warp images and weights:</strong> Assign weights proportional to distance from the nearest source border, then warp colors and weights onto the canvas with bilinear interpolation. Larger interior weights make the transition between images gradual.</li>
+      <li><strong>Blend:</strong> Sum the weighted colors and divide by the total weight at each covered pixel. Validity masks exclude empty warp regions from the blend.</li>
+    </ol>
     <pre><code>mosaic = (weight1 * image1 + weight2 * image2) / (weight1 + weight2)</code></pre>
     <div class="stack-sheet">
       <div class="img-card">
@@ -175,8 +192,13 @@
   <section id="part-b">
     <h2>Part B: Feature Matching for Autostitching</h2>
     <h3 id="corners">B.1: Harris Corner Detection</h3>
-    <p>The three house photos are resized to 1024&times;768 and converted to grayscale. The supplied <code>get_harris_corners</code> function detects corners at a single scale with &sigma; = 1 and discards points within 20 pixels of the image boundary.</p>
-    <p>Adaptive non-maximal suppression (ANMS) assigns each corner a radius equal to its distance from the nearest sufficiently stronger corner, using <code>strength[i] &lt; 0.9 * strength[j]</code>. The 500 corners with the largest radii are retained, following <a href="https://www.microsoft.com/en-us/research/wp-content/uploads/2005/06/cvpr05.pdf">Brown et al., Section 3</a>.</p>
+    <p>The three house photos are reduced to 1024&times;768 with Lanczos resampling and converted to grayscale. Harris detects locations with strong intensity changes in two directions, making corners useful landmarks for matching. The supplied <code>get_harris_corners</code> function finds local response maxima at &sigma; = 1. A 20-pixel boundary margin leaves room for the descriptor windows in B.2.</p>
+    <p>Adaptive non-maximal suppression (ANMS) selects strong corners with spatial coverage across the image, following <a href="https://www.microsoft.com/en-us/research/wp-content/uploads/2005/06/cvpr05.pdf">Brown et al., Section 3</a>:</p>
+    <ol>
+      <li><strong>Find stronger neighbors:</strong> For each corner i, consider corners j satisfying <code>strength[i] &lt; 0.9 * strength[j]</code>.</li>
+      <li><strong>Measure separation:</strong> Set the suppression radius to the distance to the nearest qualifying neighbor. Corners with no qualifying neighbor receive an infinite radius.</li>
+      <li><strong>Select:</strong> Keep the 500 largest radii. This favors corners that are strong relative to their surroundings and reduces clustering in textured areas.</li>
+    </ol>
 
     <h4>Image 1</h4>
     <div class="grid-2">
@@ -212,7 +234,11 @@
       </div>
     </div>
     <h3 id="descriptors">B.2: Feature Descriptor Extraction</h3>
-    <p>For each selected corner, extract an axis-aligned 40&times;40 grayscale patch, apply a Gaussian blur with &sigma; = 2, and sample every fifth pixel to produce an 8&times;8 patch. Subtract its mean and divide by its standard deviation to normalize brightness and contrast. Each descriptor is stored as a vector of 64 values.</p>
+    <ol>
+      <li><strong>Extract context:</strong> Take an axis-aligned 40&times;40 grayscale window around each selected corner.</li>
+      <li><strong>Blur and sample:</strong> Apply a Gaussian with &sigma; = 2, reflecting at the window boundaries, then sample every fifth pixel to form an 8&times;8 patch. Smoothing before subsampling reduces aliasing and makes the descriptor less sensitive to small corner-location errors.</li>
+      <li><strong>Normalize:</strong> Subtract the patch mean to remove brightness offset and divide by its standard deviation to normalize contrast. Flatten the result into a 64-value descriptor.</li>
+    </ol>
     <pre><code>descriptor = (patch_8x8 - patch_8x8.mean()) / patch_8x8.std()</code></pre>
     <p>Each image produces 500 descriptors. Six examples from Image 2 are shown below.</p>
     <div class="stack-sheet">
@@ -228,7 +254,11 @@
       </div>
     </div>
     <h3 id="matching">B.3: Feature Matching</h3>
-    <p>For each descriptor, find its two nearest neighbors in the next image using the sum of squared differences (SSD). Keep the closest match when its SSD is less than half that of the second-closest match, using the ratio test in <a href="https://www.microsoft.com/en-us/research/wp-content/uploads/2005/06/cvpr05.pdf">Brown et al., Figure 6b</a>.</p>
+    <p>Repeated patterns can produce several similarly close matches. The nearest-neighbor ratio test measures how clearly the best match stands out from its alternative, using <a href="https://www.microsoft.com/en-us/research/wp-content/uploads/2005/06/cvpr05.pdf">Brown et al., Figure 6b</a>.</p>
+    <ol>
+      <li><strong>Compare:</strong> For each descriptor, calculate the sum of squared differences (SSD) to every descriptor in the next image and find the closest two.</li>
+      <li><strong>Filter:</strong> Keep the closest match when its SSD is less than half the second-closest SSD. This retains distinctive matches and rejects ambiguous alternatives.</li>
+    </ol>
     <pre><code>SSD = sum((descriptor1 - descriptor2)**2)
 accept = nearest_SSD / second_nearest_SSD &lt; 0.5</code></pre>
     <div class="stack-sheet">
@@ -244,10 +274,12 @@ accept = nearest_SSD / second_nearest_SSD &lt; 0.5</code></pre>
       </div>
     </div>
     <h3 id="ransac">B.4: RANSAC for Robust Homography</h3>
+    <p>Incorrect matches can strongly distort a least-squares homography. RANSAC searches for a model supported by a geometrically consistent set of matches. Four pairs supply the minimum eight constraints needed to estimate H.</p>
     <ol>
       <li><strong>Sample:</strong> Randomly choose four matching pairs and estimate a homography with <code>computeH</code>. Collinear samples are discarded.</li>
       <li><strong>Score:</strong> Transform all matched points and count inliers with a reprojection error below 3 pixels. Keep the model with the most inliers, breaking ties by median error.</li>
-      <li><strong>Refine:</strong> Refit the homography using the inliers and update the consensus. Sampling uses a fixed seed and a 99.9% confidence target, with a maximum of 5,000 trials.</li>
+      <li><strong>Repeat:</strong> Sample with a fixed random seed and use the best inlier fraction to estimate the trials needed for a 99.9% chance of drawing four inliers, with a maximum of 5,000 trials.</li>
+      <li><strong>Refine:</strong> Refit the homography using the inliers, then update the consensus from the new reprojection errors. Repeat until the inlier set stabilizes or ten refits are reached.</li>
     </ol>
     <div class="table-scroll"><table>
       <thead><tr><th scope="col">Image Pair</th><th scope="col">Matches</th><th scope="col">Inliers</th><th scope="col">Inlier RMSE (px)</th></tr></thead>
@@ -268,21 +300,22 @@ accept = nearest_SSD / second_nearest_SSD &lt; 0.5</code></pre>
 
     <h4>Manual and Automatic Stitching</h4>
     <p>The manual mosaic uses hand-selected correspondences, and the automatic mosaic uses the RANSAC estimates. Both use Image 2 as the reference, bilinear interpolation, and the feathered blending from A.4. The comparison shows the same crop in reference-image coordinates.</p>
+    <p>For the automatic mosaic, H<sub>12</sub> maps Image 1 to Image 2. Image 2 uses the identity transform, and H<sub>23</sub><sup>&minus;1</sup> maps Image 3 back to Image 2. The three warped images are blended on one canvas.</p>
     <div class="grid-2">
       <div class="img-card">
-        <a href="./media/part_b/b4/manual_mosaic.png"><img src="./media/part_b/b4/manual_comparison.png" alt="Three-image house mosaic using manually selected correspondences" width="1850" height="550" loading="lazy"></a>
+        <a href="./media/part_b/b4/manual_mosaic.png"><img src="./media/part_b/b4/manual_comparison.png" alt="Three-image house mosaic using manually selected correspondences" width="1950" height="580" loading="lazy"></a>
         <div class="img-caption"><div class="img-title">Manual</div></div>
       </div>
       <div class="img-card">
-        <a href="./media/part_b/b4/automatic_mosaic.png"><img src="./media/part_b/b4/automatic_comparison.png" alt="Same crop of the house mosaic using automatically matched RANSAC inliers" width="1850" height="550" loading="lazy"></a>
+        <a href="./media/part_b/b4/automatic_mosaic.png"><img src="./media/part_b/b4/automatic_comparison.png" alt="Same crop of the house mosaic using automatically matched RANSAC inliers" width="1950" height="580" loading="lazy"></a>
         <div class="img-caption"><div class="img-title">Automatic</div></div>
       </div>
     </div>
-    <p>The automatic result aligns the driveway joins more closely. Doubled edges are visible around the upper windows and rooflines.</p>
+    <p>The RANSAC inliers span the rooflines, windows, and driveway, giving consistent alignment across both houses. The automatic mosaic keeps the window frames and roof edges continuous through the overlaps.</p>
     <h4>Three-Image Automatic Mosaic</h4>
     <div class="stack-sheet">
       <div class="img-card">
-        <a href="./media/part_b/b4/automatic_mosaic.png"><img src="./media/part_b/b4/automatic_crop.png" alt="Automatically stitched panorama from all three house photos" width="2800" height="600" loading="lazy"></a>
+        <a href="./media/part_b/b4/automatic_mosaic.png"><img src="./media/part_b/b4/automatic_crop.png" alt="Automatically stitched panorama from all three house photos" width="2100" height="625" loading="lazy"></a>
         <div class="img-caption"><div class="img-title">Automatic House Mosaic</div>Cropped view. Click for the full canvas.</div>
       </div>
     </div>
