@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SYDE 671 Assignment 4 &mdash; Jerry Kang</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header>
+    <a href="../index.html" class="back-link">&larr; Back to Portfolio</a>
+    <h1>Assignment 4: 3D Reconstruction</h1>
+    <div class="subtitle">SYDE 671: Advanced Computer Vision &bull; University of Waterloo</div>
+    <div class="author">Jerry Kang</div>
+  </header>
+
+  <p>This assignment explores the geometry between multiple views of a scene, from estimating a fundamental matrix to reconstructing 3D points. The page is organized below; implementations and results will be added as each part is completed.</p>
+
+  <main>
+    <section id="part1">
+      <h2>1: Fundamental Matrix Estimation from Point Correspondences</h2>
+      <p>Estimate the fundamental matrix from the supplied point correspondences using the linear least-squares and normalized eight-point algorithms.</p>
+
+      <h3>Input Images</h3>
+      <h4>Set 1</h4>
+      <div class="grid-2">
+        <div class="img-card">
+          <img src="./assignment%204%20code/data/set1/image1.jpg" alt="First view of the model building in set 1">
+          <div class="img-caption"><div class="img-title">Image 1</div>37 matching points.</div>
+        </div>
+        <div class="img-card">
+          <img src="./assignment%204%20code/data/set1/image2.jpg" alt="Second view of the model building in set 1">
+          <div class="img-caption"><div class="img-title">Image 2</div></div>
+        </div>
+      </div>
+      <h4>Set 2</h4>
+      <div class="grid-2">
+        <div class="img-card">
+          <img src="./assignment%204%20code/data/set2/image1.jpg" alt="First supplied view in set 2" loading="lazy">
+          <div class="img-caption"><div class="img-title">Image 1</div>46 matching points.</div>
+        </div>
+        <div class="img-card">
+          <img src="./assignment%204%20code/data/set2/image2.jpg" alt="Second supplied view in set 2" loading="lazy">
+          <div class="img-caption"><div class="img-title">Image 2</div></div>
+        </div>
+      </div>
+
+      <h3>1(a&ndash;b): Linear Least-Squares Eight-Point Algorithm</h3>
+      <p>Solve for the fundamental matrix using SVD and enforce the rank-two constraint. This section will include the method and the matrix for each image pair.</p>
+
+      <h3>1(c&ndash;d): Normalized Eight-Point Algorithm</h3>
+      <p>Normalize the point coordinates before estimation, then transform the matrix back to pixel coordinates. Compare the resulting matrices with the unnormalized estimates.</p>
+
+      <h3>1(e&ndash;f): Distance to Epipolar Lines</h3>
+      <p>Measure the average distance from each point to its corresponding epipolar line. Compare both algorithms using distances in each image and plots of the epipolar lines.</p>
+    </section>
+
+    <section id="part2">
+      <h2>2: Matching Homographies for Image Rectification</h2>
+      <p>Use the Set 1 image pair and its normalized fundamental matrix to find two homographies that make corresponding epipolar lines horizontal.</p>
+
+      <h3>2(a): Compute the Epipoles</h3>
+      <p>Find the epipole in each image from the fundamental matrix using SVD.</p>
+
+      <h3>2(b&ndash;c): Rectifying Homographies</h3>
+      <p>Map the second epipole to infinity along the horizontal axis, then fit a matching homography for the first image.</p>
+
+      <h3>2(d): Rectified Images</h3>
+      <p>The rectified pair will show how the transforms change the epipolar lines and simplify the search for corresponding points.</p>
+    </section>
+
+    <section id="part3">
+      <h2>3: The Factorization Method</h2>
+      <p>Recover 3D structure and camera motion from the Set 1 correspondences using the Tomasi&ndash;Kanade factorization method.</p>
+
+      <h3>3(a&ndash;b): Method</h3>
+      <p>Build and center the measurement matrix, then use its rank-three factorization to separate structure and motion.</p>
+
+      <h3>3(c&ndash;d): Reconstruction and Singular Values</h3>
+      <p>Compare the reconstructed points with the supplied 3D ground truth, accounting for scale and rotation. Examine all four singular values and explain the difference between the observed rank and the ideal model.</p>
+
+      <h3>3(e&ndash;f): Reconstruction from Fewer Points</h3>
+      <p>Repeat the reconstruction using the supplied subset of 18 points instead of the full 37. Compare the shape and singular values with the full-set result.</p>
+    </section>
+
+    <section id="part4">
+      <h2>4: Triangulation in Structure from Motion</h2>
+      <p>Estimate camera rotation and translation, triangulate matching points, and use the supplied structure-from-motion framework to reconstruct the statue.</p>
+
+      <h3>Input Sequence</h3>
+      <div class="grid-sequence">
+        <div class="img-card"><img src="./assignment%204%20code/data/statue/images/B21.jpg" alt="Statue view B21" loading="lazy"><div class="img-caption"><div class="img-title">B21</div></div></div>
+        <div class="img-card"><img src="./assignment%204%20code/data/statue/images/B22.jpg" alt="Statue view B22" loading="lazy"><div class="img-caption"><div class="img-title">B22</div></div></div>
+        <div class="img-card"><img src="./assignment%204%20code/data/statue/images/B23.jpg" alt="Statue view B23" loading="lazy"><div class="img-caption"><div class="img-title">B23</div></div></div>
+        <div class="img-card"><img src="./assignment%204%20code/data/statue/images/B24.jpg" alt="Statue view B24" loading="lazy"><div class="img-caption"><div class="img-title">B24</div></div></div>
+        <div class="img-card"><img src="./assignment%204%20code/data/statue/images/B25.jpg" alt="Statue view B25" loading="lazy"><div class="img-caption"><div class="img-title">B25</div></div></div>
+      </div>
+
+      <h3>4(a): Rotation and Translation Candidates</h3>
+      <p>Decompose the essential matrix into four possible camera poses and compare them with the supplied example.</p>
+
+      <h3>4(b): Linear Triangulation</h3>
+      <p>Use the camera matrices and image correspondences to estimate a 3D point with the direct linear transform (DLT).</p>
+
+      <h3>4(c&ndash;d): Reprojection Error and Nonlinear Refinement</h3>
+      <p>Compute the reprojection residuals and their Jacobian, then refine the linear estimate with ten Gauss-Newton updates. Use the supplied numerical checks and compare the linear and nonlinear errors.</p>
+
+      <h3>4(e): Select the Camera Pose</h3>
+      <p>Choose the pose for which the most triangulated points have positive depth in both camera frames.</p>
+
+      <h3>4(f): Statue Reconstruction</h3>
+      <p>Run the full pipeline to produce the statue point cloud, then discuss the challenges of reconstructing a larger scene such as a house.</p>
+    </section>
+  </main>
+
+  <footer>Jerry Kang &bull; SYDE 671 &bull; University of Waterloo</footer>
+</body>
+</html>
