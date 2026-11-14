@@ -2,13 +2,13 @@
 import numpy as np
 
 
-def _prepare_points(points1, points2):
+def _prepare_points(points1, points2, min_points=8):
     """Validate matching finite image points and set their last coordinate to one."""
     first = np.asarray(points1, dtype=np.float64)
     second = np.asarray(points2, dtype=np.float64)
     if (first.ndim != 2 or first.shape[1] != 3 or second.shape != first.shape
-            or len(first) < 8):
-        raise ValueError("Provide matching n-by-3 point arrays with n >= 8")
+            or len(first) < min_points):
+        raise ValueError(f"Provide matching n-by-3 point arrays with n >= {min_points}")
     if not np.isfinite(first).all() or not np.isfinite(second).all():
         raise ValueError("Point coordinates must be finite")
     if np.any(first[:, 2] == 0) or np.any(second[:, 2] == 0):
@@ -76,3 +76,23 @@ def normalized_eight_point_alg(points1, points2):
     normalized_f = lls_eight_point_alg(first, second)
     # Substitute normalized points T1 @ p1 and T2 @ p2 into the constraint.
     return _fix_scale(t2.T @ normalized_f @ t1)
+
+
+def compute_distance_to_epipolar_lines(points1, points2, F):
+    """Return the mean distance in pixels from points1 to lines F.T @ points2.
+
+    F follows p2.T @ F @ p1 = 0. For distances in the second image, call
+    this function with (points2, points1, F.T). At least one pair is required.
+    """
+    first, second = _prepare_points(points1, points2, min_points=1)
+    f = np.asarray(F, dtype=np.float64)
+    if f.shape != (3, 3) or not np.isfinite(f).all() or not np.any(f):
+        raise ValueError("Provide a finite, nonzero 3-by-3 fundamental matrix")
+    # Remove the arbitrary scale before computing line coefficients.
+    f = f / np.abs(f).max()
+    lines = second @ f
+    lengths = np.hypot(lines[:, 0], lines[:, 1])
+    if np.any(lengths == 0):
+        raise ValueError("An epipolar line has no finite point-to-line distance")
+    distances = np.abs(np.sum(first * lines, axis=1)) / lengths
+    return float(distances.mean())

@@ -91,7 +91,46 @@ T = [[s, 0, -s*cx],
  [-2.08672226e-02,  7.52241693e-01,  2.22656232e-01]]</code></pre>
 
       <h3>1(e&ndash;f): Distance to Epipolar Lines</h3>
-      <p>Measure the average distance from each point to its corresponding epipolar line. Compare both algorithms using distances in each image and plots of the epipolar lines.</p>
+      <p>To measure the fit in image coordinates, compute the perpendicular distance from each point to the epipolar line predicted by its match in the other image.</p>
+      <ol>
+        <li><strong>Find the lines:</strong> For each point p<sub>2</sub> in Image 2, compute its corresponding line in Image 1 as l<sub>1</sub> = F<sup>T</sup>p<sub>2</sub>. The three line coefficients (a, b, c) define ax + by + c = 0.</li>
+        <li><strong>Measure distance:</strong> For the matching point (x, y) in Image 1, compute |ax + by + c| / &radic;(a&sup2; + b&sup2;). Dividing by the line-normal length makes the distance independent of the arbitrary scale of F.</li>
+        <li><strong>Average:</strong> Take the arithmetic mean over all correspondences. To measure Image 2, swap the point sets and use F<sup>T</sup> in the same function, which forms the lines l<sub>2</sub> = Fp<sub>1</sub>.</li>
+      </ol>
+
+      <h4>Mean Distance to Epipolar Lines</h4>
+      <div class="table-scroll"><table>
+        <thead><tr><th scope="col">Image Pair</th><th scope="col">Algorithm</th><th scope="col">Image 1 (px)</th><th scope="col">Image 2 (px)</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Set 1</th><td>Linear least squares</td><td>28.0257</td><td>25.1629</td></tr>
+          <tr><th scope="row">Set 1</th><td>Normalized</td><td>0.8906</td><td>0.8287</td></tr>
+          <tr><th scope="row">Set 2</th><td>Linear least squares</td><td>9.7014</td><td>14.5682</td></tr>
+          <tr><th scope="row">Set 2</th><td>Normalized</td><td>0.8895</td><td>0.8917</td></tr>
+        </tbody>
+      </table></div>
+      <p>Normalization reduces the mean distance below one pixel in both images of both sets. The unnormalized fit has much larger errors, especially for Set 1. Its objective minimizes an algebraic residual rather than pixel distance, and the differently scaled terms in A make the fit sensitive to the coordinate magnitudes. Normalization improves the conditioning before fitting and enforcing rank two.</p>
+
+      <h4>Set 1: Epipolar Lines</h4>
+      <p>Red lines are predicted from points in the other image; blue markers show the measured points. Each panel retains the original 512&times;512 image coordinates.</p>
+      <div class="stack-sheet img-card">
+        <a href="./media/part1/set1_linear_epipolar.png"><img src="./media/part1/set1_linear_epipolar.png" alt="Set 1 linear estimate: epipolar lines visibly miss many matching points" width="1036" height="542" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Linear Least Squares</div></div>
+      </div>
+      <div class="stack-sheet img-card">
+        <a href="./media/part1/set1_normalized_epipolar.png"><img src="./media/part1/set1_normalized_epipolar.png" alt="Set 1 normalized estimate: epipolar lines align closely with the measured points" width="1036" height="542" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Normalized Eight-Point Algorithm</div></div>
+      </div>
+
+      <h4>Set 2: Epipolar Lines</h4>
+      <div class="stack-sheet img-card">
+        <a href="./media/part1/set2_linear_epipolar.png"><img src="./media/part1/set2_linear_epipolar.png" alt="Set 2 linear estimate: epipolar lines diverge from several measured points" width="1036" height="542" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Linear Least Squares</div></div>
+      </div>
+      <div class="stack-sheet img-card">
+        <a href="./media/part1/set2_normalized_epipolar.png"><img src="./media/part1/set2_normalized_epipolar.png" alt="Set 2 normalized estimate: epipolar lines pass close to the measured points" width="1036" height="542" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Normalized Eight-Point Algorithm</div></div>
+      </div>
+      <p>In both sets, the normalized lines follow the point locations more closely, matching the lower distances in the table. These are fitting errors on the supplied correspondences, rather than errors on a separate test set.</p>
     </section>
 
     <section id="part2">

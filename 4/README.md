@@ -1,7 +1,7 @@
 # Assignment 4
 
 Fundamental matrix estimation, image rectification, factorization, and triangulation.
-Problems 1(a) and 1(c) are implemented in `src/fundamental.py`, with result generation in
+Problem 1 is implemented in `src/fundamental.py`, with result generation in
 `scripts/part1.py`. Remaining algorithms and result scripts will be added as
 each part is implemented. The supplied
 `assignment 4 code/` folder is preserved unchanged.
@@ -85,7 +85,7 @@ With a local Python installation, from `4/`:
 python -m pip install -r requirements.txt
 ```
 
-Generate the Problem 1(a-d) matrices from inside `4/`:
+Generate the Problem 1 matrices, distance measurements, and plots from inside `4/`:
 
 ```sh
 python scripts/part1.py
@@ -101,6 +101,15 @@ unit Frobenius norm and a positive largest-magnitude entry. Outputs are
 `media/part1/set1_linear_F.npy`, `set2_linear_F.npy`,
 `set1_normalized_F.npy`, `set2_normalized_F.npy`, and `results.json`.
 Each JSON record identifies its dataset and method.
+`compute_distance_to_epipolar_lines(points1, points2, F)` returns the mean
+perpendicular distance in pixels in Image 1. Swap the point sets and pass `F.T`
+for Image 2. It accepts one or more pairs, rejects undefined lines, and divides
+by the line-normal length so the result does not depend on the scale of F.
+The script also saves four paired epipolar-line plots as
+`media/part1/{dataset}_{method}_epipolar.png` and stores both image distances
+in each JSON record. Red lines and blue points are drawn with Pillow at the
+original image resolution; the plotting code clips lines at the image borders,
+including vertical lines.
 No notebook runtime is required for the static report.
 
 To preview from the repository root:

@@ -31,7 +31,10 @@
         0.9999999859900133,
         0.00016739167791943383,
         1.0528680858686094e-19
-      ]
+      ],
+      "mean_distance_image1_px": 28.02566293749008,
+      "mean_distance_image2_px": 25.16287580000129,
+      "epipolar_plot": "set1_linear_epipolar.png"
     },
     {
       "dataset": "set1",
@@ -58,7 +61,10 @@
         0.9999964541845928,
         0.002663009245486918,
         2.807852749647519e-18
-      ]
+      ],
+      "mean_distance_image1_px": 0.890572936202898,
+      "mean_distance_image2_px": 0.8286681346567923,
+      "epipolar_plot": "set1_normalized_epipolar.png"
     },
     {
       "dataset": "set2",
@@ -85,7 +91,10 @@
         0.9999999636459506,
         0.0002696443898809245,
         4.882989625519712e-19
-      ]
+      ],
+      "mean_distance_image1_px": 9.701438829442697,
+      "mean_distance_image2_px": 14.568227190511061,
+      "epipolar_plot": "set2_linear_epipolar.png"
     },
     {
       "dataset": "set2",
@@ -112,7 +121,10 @@
         0.8247457338783152,
         0.5655037351331283,
         9.749223920635249e-18
-      ]
+      ],
+      "mean_distance_image1_px": 0.8894960616888511,
+      "mean_distance_image2_px": 0.8917172367782186,
+      "epipolar_plot": "set2_normalized_epipolar.png"
     }
   ]
 }
