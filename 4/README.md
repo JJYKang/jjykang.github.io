@@ -1,8 +1,9 @@
 # Assignment 4
 
 Fundamental matrix estimation, image rectification, factorization, and triangulation.
-This scaffold contains the report and output directories. Algorithms and result
-scripts will be added as each part is implemented. The supplied
+Problem 1(a) is implemented in `src/fundamental.py`, with result generation in
+`scripts/part1.py`. Remaining algorithms and result scripts will be added as
+each part is implemented. The supplied
 `assignment 4 code/` folder is preserved unchanged.
 
 ```text
@@ -84,8 +85,19 @@ With a local Python installation, from `4/`:
 python -m pip install -r requirements.txt
 ```
 
-The planned result scripts do not exist yet. Add run commands here as each is
-implemented and verified. No notebook runtime is required for the static report.
+Generate the Problem 1(a) matrices from inside `4/`:
+
+```sh
+python scripts/part1.py
+```
+
+From the portfolio root, use `python 4/scripts/part1.py`. This currently runs
+only the linear least-squares eight-point algorithm, without point normalization.
+The function accepts homogeneous n-by-3 points and enforces rank two by setting
+the smallest singular value of the fitted matrix to zero. Saved matrices have
+unit Frobenius norm and a positive largest-magnitude entry. Outputs are
+`media/part1/set1_linear_F.npy`, `set2_linear_F.npy`, and `results.json`.
+No notebook runtime is required for the static report.
 
 To preview from the repository root:
 
