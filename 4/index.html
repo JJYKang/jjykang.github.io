@@ -67,7 +67,28 @@
  [-1.07623595e-02,  1.22519240e-02,  9.99730547e-01]]</code></pre>
 
       <h3>1(c&ndash;d): Normalized Eight-Point Algorithm</h3>
-      <p>Normalize the point coordinates before estimation, then transform the matrix back to pixel coordinates. Compare the resulting matrices with the unnormalized estimates.</p>
+      <p>Pixel coordinates produce terms of different magnitudes in A: products such as x<sub>2</sub>x<sub>1</sub> can be much larger than individual coordinates or the constant term. Normalizing the points before fitting keeps these terms at comparable scales and improves numerical conditioning.</p>
+      <ol>
+        <li><strong>Normalize the points:</strong> For each image independently, subtract the centroid and scale the coordinates so their mean Euclidean distance from the origin is &radic;2. The transforms T<sub>1</sub> and T<sub>2</sub> record this translation and scaling.</li>
+        <li><strong>Estimate the matrix:</strong> Apply the linear eight-point algorithm from 1(a) to the normalized points. Solve with SVD and set the smallest singular value of the fitted matrix to zero to enforce rank two in the normalized coordinates.</li>
+        <li><strong>Recover pixel coordinates:</strong> Transform the matrix back using F = T<sub>2</sub><sup>T</sup>F<sub>norm</sub>T<sub>1</sub>. This follows by substituting T<sub>1</sub>p<sub>1</sub> and T<sub>2</sub>p<sub>2</sub> into the epipolar constraint.</li>
+      </ol>
+      <p>For centroid (c<sub>x</sub>, c<sub>y</sub>) and mean distance d from that centroid, the normalization transform is:</p>
+      <pre><code>s = sqrt(2) / d
+T = [[s, 0, -s*cx],
+     [0, s, -s*cy],
+     [0, 0,     1]]</code></pre>
+
+      <h4>Fundamental Matrices</h4>
+      <p>These matrices are expressed in the original pixel coordinates and use the same unit Frobenius norm and sign convention as 1(b).</p>
+      <h4>Set 1</h4>
+      <pre><code>[[ 4.45505557e-06, -3.63935568e-05,  6.03119338e-04],
+ [-3.35055836e-05, -2.32218046e-06, -4.39148773e-02],
+ [-5.84762546e-03,  6.03085864e-02,  9.97195967e-01]]</code></pre>
+      <h4>Set 2</h4>
+      <pre><code>[[ 1.33351218e-05, -2.22048310e-04,  1.37802168e-02],
+ [-3.20320025e-04, -2.83731330e-05, -6.19621780e-01],
+ [-2.08672226e-02,  7.52241693e-01,  2.22656232e-01]]</code></pre>
 
       <h3>1(e&ndash;f): Distance to Epipolar Lines</h3>
       <p>Measure the average distance from each point to its corresponding epipolar line. Compare both algorithms using distances in each image and plots of the epipolar lines.</p>

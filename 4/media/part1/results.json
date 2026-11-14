@@ -1,10 +1,14 @@
 {
-  "method": "linear least-squares eight-point algorithm",
+  "methods": [
+    "linear",
+    "normalized"
+  ],
   "constraint": "p2.T @ F @ p1 = 0",
   "scale": "unit Frobenius norm; largest-magnitude entry positive",
   "records": [
     {
       "dataset": "set1",
+      "method": "linear",
       "correspondences": 37,
       "fundamental_matrix": [
         [
@@ -30,7 +34,35 @@
       ]
     },
     {
+      "dataset": "set1",
+      "method": "normalized",
+      "correspondences": 37,
+      "fundamental_matrix": [
+        [
+          4.455055566423281e-06,
+          -3.639355681025192e-05,
+          0.0006031193378607424
+        ],
+        [
+          -3.350558356491343e-05,
+          -2.3221804632867676e-06,
+          -0.043914877255398166
+        ],
+        [
+          -0.005847625457962614,
+          0.060308586443112044,
+          0.9971959672040844
+        ]
+      ],
+      "singular_values": [
+        0.9999964541845928,
+        0.002663009245486918,
+        2.807852749647519e-18
+      ]
+    },
+    {
       "dataset": "set2",
+      "method": "linear",
       "correspondences": 46,
       "fundamental_matrix": [
         [
@@ -53,6 +85,33 @@
         0.9999999636459506,
         0.0002696443898809245,
         4.882989625519712e-19
+      ]
+    },
+    {
+      "dataset": "set2",
+      "method": "normalized",
+      "correspondences": 46,
+      "fundamental_matrix": [
+        [
+          1.3335121798552172e-05,
+          -0.0002220483099692709,
+          0.01378021681588503
+        ],
+        [
+          -0.000320320024642681,
+          -2.8373133035374476e-05,
+          -0.6196217796964048
+        ],
+        [
+          -0.020867222590296594,
+          0.752241692662353,
+          0.22265623211350308
+        ]
+      ],
+      "singular_values": [
+        0.8247457338783152,
+        0.5655037351331283,
+        9.749223920635249e-18
       ]
     }
   ]
