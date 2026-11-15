@@ -2,8 +2,8 @@
 
 Fundamental matrix estimation, image rectification, factorization, and triangulation.
 Problem 1 is implemented in `src/fundamental.py`, with result generation in
-`scripts/part1.py`. Problem 2(a) is implemented in `src/rectification.py`, with
-Set 1 epipole checks in `scripts/part2.py`. Remaining algorithms and result scripts will be added as
+`scripts/part1.py`. Problems 2(a-b) are implemented in `src/rectification.py`, with
+Set 1 epipole and homography checks in `scripts/part2.py`. Remaining algorithms and result scripts will be added as
 each part is implemented. The supplied
 `assignment 4 code/` folder is preserved unchanged.
 
@@ -124,7 +124,7 @@ original image resolution; the plotting code clips lines at the image borders,
 including vertical lines.
 No notebook runtime is required for the static report.
 
-Generate the Problem 2(a) epipoles from inside `4/`:
+Generate the Problem 2(a-b) epipoles and homography from inside `4/`:
 
 ```sh
 python scripts/part2.py
@@ -137,6 +137,15 @@ null vector of F, satisfying `F.T @ e = 0`, as in the starter convention.
 Image 1 uses `compute_epipole(F.T)` and Image 2 uses `compute_epipole(F)`.
 Finite epipoles are scaled to `(x, y, 1)`; an epipole at infinity is returned
 as a unit direction `(x, y, 0)` without division by zero.
+
+`compute_H(e, im)` composes `T_inverse @ G @ R @ T`, using the image center
+`(width / 2, height / 2)` and the rotation sign specified in the handout.
+It maps the epipole to horizontal infinity and leaves the image center fixed.
+An epipole already at infinity needs no projective step. An epipole at the
+image center is rejected because this construction is undefined there.
+The script saves `media/part2/set1_H2.npy` and records the homography and
+transformed epipole in `results.json`. Image warping and the matching homography
+for Image 1 will be added in the subsequent parts.
 
 To preview from the repository root:
 
