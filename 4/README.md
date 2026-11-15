@@ -2,7 +2,8 @@
 
 Fundamental matrix estimation, image rectification, factorization, and triangulation.
 Problem 1 is implemented in `src/fundamental.py`, with result generation in
-`scripts/part1.py`. Remaining algorithms and result scripts will be added as
+`scripts/part1.py`. Problem 2(a) is implemented in `src/rectification.py`, with
+Set 1 epipole checks in `scripts/part2.py`. Remaining algorithms and result scripts will be added as
 each part is implemented. The supplied
 `assignment 4 code/` folder is preserved unchanged.
 
@@ -122,6 +123,20 @@ in each JSON record. Red lines and blue points are drawn with Pillow at the
 original image resolution; the plotting code clips lines at the image borders,
 including vertical lines.
 No notebook runtime is required for the static report.
+
+Generate the Problem 2(a) epipoles from inside `4/`:
+
+```sh
+python scripts/part2.py
+```
+
+From the portfolio root, use `python 4/scripts/part2.py`. The script recomputes
+the normalized Set 1 fundamental matrix and saves both epipoles and null-space
+residuals in `media/part2/results.json`. `compute_epipole(F)` returns the left
+null vector of F, satisfying `F.T @ e = 0`, as in the starter convention.
+Image 1 uses `compute_epipole(F.T)` and Image 2 uses `compute_epipole(F)`.
+Finite epipoles are scaled to `(x, y, 1)`; an epipole at infinity is returned
+as a unit direction `(x, y, 0)` without division by zero.
 
 To preview from the repository root:
 
