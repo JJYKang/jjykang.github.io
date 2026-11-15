@@ -5,10 +5,9 @@ Problem 1 is implemented in `src/fundamental.py`, with result generation in
 `scripts/part1.py`. Problem 2 uses `src/rectification.py` and `src/warping.py`, with
 Set 1 checks and image exports in `scripts/part2.py`. Problem 3(a) uses
 `src/factorization.py`, with full/subset result generation in `scripts/part3.py`.
-Problems 4(a-e) use `src/triangulation.py`, with pose, triangulation, and derivative checks
-in `scripts/part4.py`.
-Remaining algorithms and result scripts will be added as
-each part is implemented. The supplied
+Problems 4(a-e) use `src/triangulation.py`, with checks in `scripts/part4.py`.
+The complete 4(f) reconstruction runs through `scripts/part4_reconstruction.py`
+and the adapted supplied framework in `src/sfm_utils.py`. The supplied
 `assignment 4 code/` folder is preserved unchanged.
 
 ```text
@@ -57,9 +56,9 @@ conventions beside the relevant implementation.
 
 Problem 4 requires ten Gauss-Newton updates initialized by the linear estimate.
 Use the supplied numeric examples as checks before running the full pipeline.
-Audit helper imports and the final 3D plotting call for compatibility during
-integration. The starter dense loop omits its last adjacent image pair; check
-that bound when preparing the final reconstruction.
+The working SfM helper uses our implementations directly, avoiding the starter's
+circular imports. The reconstruction includes the last adjacent dense pair,
+which the original dense loop omitted.
 
 ## Webpage and result files
 
@@ -259,6 +258,35 @@ first maximum. The script checks every adjacent statue pair and the supplied
 single-match example. Selected poses are saved as
 `pair_{i}_{j}_selected_RT.npy`; each JSON pair record includes positive-depth
 counts, failed-triangulation counts, and the selected candidate index (zero-based).
+
+Run the full Problem 4(f) reconstruction from inside `4/`:
+
+```sh
+python scripts/part4_reconstruction.py
+```
+
+The supplied `sfm_utils.py` is adapted into `src/` with direct imports from our
+triangulation module and no unused `scipy.misc` import. Pairwise frames are
+bundle-adjusted, merged through shared tracks, retriangulated, and adjusted
+again using the supplied framework. Corrections select tracks visible in the
+actual shared camera and normalize viewing directions per point for every
+camera. Viewing-angle rejection is applied once after all comparisons so point
+indices do not shift while the filter runs.
+
+After adjustment, a global similarity places the first camera at the origin
+and fixes the first-to-second baseline to one without changing projections.
+All four dense match sets use the same DLT initialization and ten Gauss-Newton
+updates as 4(b-d), evaluated in batches with SVD-based least-squares updates.
+The batched implementation is checked against the scalar implementation.
+Points must have positive depth in both source cameras and reprojection error
+at most 10 pixels per image, matching the framework's sparse error threshold.
+
+`statue_reconstruction.npz` saves the retained dense points, sparse points,
+camera poses, intrinsics, and track data. `reconstruction_results.json` records
+per-pair counts, errors, coordinate conventions, and the plot crop.
+`statue_reconstruction.png` uses depth coloring and a closer view of the bust;
+the complete retained cloud remains in the saved arrays. Regenerate just the
+figure with `python scripts/part4_reconstruction.py --plot-only`.
 
 To preview from the repository root:
 

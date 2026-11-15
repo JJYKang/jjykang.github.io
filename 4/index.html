@@ -222,6 +222,12 @@
       <p>Candidate triangulation and positive-depth voting in both camera frames &mdash; <a href="./src/triangulation.py">triangulation.py</a></p>
 
       <h3 id="part4f">4(f): Statue Reconstruction and Larger Scenes</h3>
+      <div class="stack-sheet img-card">
+        <a href="./media/part4/statue_reconstruction.png"><img src="./media/part4/statue_reconstruction.png" alt="Reconstructed statue point cloud, colored by depth, showing the partial head and pedestal with gaps and background points" width="1440" height="1440" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Statue Reconstruction</div>Five views and all four adjacent image pairs; 174,853 points retained after depth and reprojection checks. Color indicates depth. The view is cropped around the bust; coordinate scale is relative to a unit camera baseline.</div>
+      </div>
+      <p>A house requires more viewpoints to cover its larger extent, with occlusions hiding different surfaces from each position. Blank walls provide few distinctive features, while repeated windows and bricks can produce ambiguous matches. Changing illumination, reflections, and moving objects also make correspondence less reliable than for a small, stationary statue.</p>
+      <p>A longer image sequence introduces more camera poses and point tracks, increasing memory use and the cost of bundle adjustment. Pose errors can accumulate into drift, so overlapping views throughout the scene and revisiting previously seen areas become important for maintaining a consistent reconstruction. Distant surfaces also need larger camera baselines to obtain reliable depth.</p>
     </section>
   </main>
 
