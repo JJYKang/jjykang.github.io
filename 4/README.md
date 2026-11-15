@@ -5,7 +5,7 @@ Problem 1 is implemented in `src/fundamental.py`, with result generation in
 `scripts/part1.py`. Problem 2 uses `src/rectification.py` and `src/warping.py`, with
 Set 1 checks and image exports in `scripts/part2.py`. Problem 3(a) uses
 `src/factorization.py`, with full/subset result generation in `scripts/part3.py`.
-Problems 4(a-b) use `src/triangulation.py`, with pose and triangulation checks
+Problems 4(a-c) use `src/triangulation.py`, with pose, triangulation, and derivative checks
 in `scripts/part4.py`.
 Remaining algorithms and result scripts will be added as
 each part is implemented. The supplied
@@ -200,7 +200,7 @@ out-of-plane spread. Ground-truth and aligned-reconstruction coordinate ranges
 are saved in `results.json`; `set1_subset_comparison.npz` stores the compared
 points and errors. No subset comparison uses the full-set points for fitting.
 
-Generate the Problem 4(a-b) pose candidates and linear triangulation check from inside `4/`:
+Generate the Problem 4(a-c) pose, triangulation, and reprojection checks from inside `4/`:
 
 ```sh
 python scripts/part4.py
@@ -229,6 +229,17 @@ For the supplied rounded camera pose and first match, homogeneous DLT returns
 approximately `(0.676717, -1.102419, 4.660340)`. The starter's reference is
 `(0.6774, -1.1029, 4.6621)`, with summed absolute difference about 0.002924;
 the script records this difference rather than claiming four-decimal agreement.
+
+`reprojection_error(point_3d, image_points, camera_matrices)` returns a flat
+`2M`-element vector ordered `(dx1, dy1, dx2, dy2, ...)`, with residuals defined
+as projected minus observed coordinates. `jacobian(point_3d, camera_matrices)`
+returns its analytic `2M-by-3` derivative with respect to `(X, Y, Z)`, using the
+quotient rule. Both support one or more views and reject zero projective depth;
+negative depths remain valid until pose selection in 4(e). The 4(c) checks use
+the starter's reference point, rather than the slightly different DLT estimate,
+and compare the residuals and Jacobian against the supplied values and central
+finite differences. Inputs and arrays are saved in `reprojection_check.npz`,
+with summary errors in `results.json`.
 
 To preview from the repository root:
 

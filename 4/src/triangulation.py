@@ -60,3 +60,43 @@ def linear_estimate_3d_point(image_points, camera_matrices):
     if np.any(np.abs(depths) <= tolerance):
         raise ValueError("The triangulated point has an undefined image projection")
     return homogeneous[:3] / homogeneous[3]
+
+
+def _project_point(point_3d, camera_matrices):
+    """Validate a finite world point and cameras, then return projective coordinates."""
+    point = np.asarray(point_3d, dtype=np.float64)
+    cameras = np.asarray(camera_matrices, dtype=np.float64)
+    if point.shape != (3,) or not np.isfinite(point).all():
+        raise ValueError("Provide a finite length-three 3D point")
+    if (cameras.ndim != 3 or cameras.shape[1:] != (3, 4) or len(cameras) < 1
+            or not np.isfinite(cameras).all()):
+        raise ValueError("Provide finite M-by-3-by-4 camera matrices, M >= 1")
+    scales = np.max(np.abs(cameras), axis=(1, 2), keepdims=True)
+    if np.any(scales == 0):
+        raise ValueError("Camera matrices must be nonzero")
+    cameras = cameras / scales
+    projected = cameras[:, :, :3] @ point + cameras[:, :, 3]
+    if np.any(projected[:, 2] == 0):
+        raise ValueError("The 3D point has an undefined image projection")
+    return projected, cameras
+
+
+def reprojection_error(point_3d, image_points, camera_matrices):
+    """Return projected-minus-observed residuals as (dx1, dy1, dx2, dy2, ...)."""
+    projected, _ = _project_point(point_3d, camera_matrices)
+    points = np.asarray(image_points, dtype=np.float64)
+    if points.shape != (len(projected), 2) or not np.isfinite(points).all():
+        raise ValueError("Provide finite M-by-2 image points matching the cameras")
+    predicted = projected[:, :2] / projected[:, 2:3]
+    return (predicted - points).reshape(-1)
+
+
+def jacobian(point_3d, camera_matrices):
+    """Return the analytic 2M-by-3 reprojection Jacobian, ordered x1, y1, x2, y2."""
+    projected, cameras = _project_point(point_3d, camera_matrices)
+    predicted = projected[:, :2] / projected[:, 2:3]
+    # Quotient rule: d(y_i/y_3)/dX = (P_i - (y_i/y_3)*P_3) / y_3.
+    derivatives = (cameras[:, :2, :3]
+                   - predicted[:, :, None] * cameras[:, 2:3, :3])
+    derivatives /= projected[:, 2, None, None]
+    return derivatives.reshape(-1, 3)

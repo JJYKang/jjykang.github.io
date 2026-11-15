@@ -1,4 +1,4 @@
-"""Generate pose candidates and check linear triangulation for Problem 4(a-b)."""
+"""Check pose candidates, linear triangulation, and reprojection derivatives."""
 import json
 from pathlib import Path
 import sys
@@ -7,7 +7,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 import numpy as np
-from triangulation import estimate_initial_RT, linear_estimate_3d_point
+from triangulation import (estimate_initial_RT, linear_estimate_3d_point,
+                           reprojection_error, jacobian)
 
 DATA = ROOT / "assignment 4 code" / "data"
 OUT = ROOT / "media" / "part4"
@@ -40,6 +41,48 @@ def check_linear_triangulation(k):
             "expected_point": expected.tolist(),
             "sum_absolute_difference": float(difference.sum()),
             "max_absolute_difference": float(difference.max())}
+
+
+def check_reprojection():
+    """Verify the supplied residual/Jacobian and a central-difference derivative."""
+    with np.load(OUT / "linear_triangulation_check.npz") as inputs:
+        point = inputs["expected_point"]
+        image_points = inputs["image_points"]
+        cameras = inputs["camera_matrices"]
+    error = reprojection_error(point, image_points, cameras)
+    derivatives = jacobian(point, cameras)
+    expected_error = np.array([-0.0095458, -0.5171407, 0.0059307, 0.501631])
+    expected_jacobian = np.array([[154.33943931, 0., -22.42541691],
+                                  [0., 154.33943931, 36.51165089],
+                                  [141.87950588, -14.27738422, -56.20341644],
+                                  [21.9792766, 149.50628901, 32.23425643]])
+    error_difference = np.abs(error-expected_error)
+    jacobian_difference = np.abs(derivatives-expected_jacobian)
+    # Residual references are truncated to six/seven decimals; J has eight.
+    if error_difference.max() > 1e-6 or jacobian_difference.max() > 1e-8:
+        raise ValueError("Reprojection results do not match the supplied reference values")
+    numerical = np.empty_like(derivatives)
+    for axis in range(3):
+        step = np.zeros(3)
+        step[axis] = 1e-6 * max(1., abs(point[axis]))
+        numerical[:, axis] = (reprojection_error(point+step, image_points, cameras)
+                              - reprojection_error(point-step, image_points, cameras)) / (2*step[axis])
+    finite_difference_error = np.abs(derivatives-numerical).max()
+    if finite_difference_error > 1e-5:
+        raise ValueError("Analytic Jacobian does not agree with central differences")
+    filename = "reprojection_check.npz"
+    np.savez_compressed(OUT / filename, point=point, image_points=image_points,
+                        camera_matrices=cameras, residual=error, jacobian=derivatives,
+                        numerical_jacobian=numerical, expected_residual=expected_error,
+                        expected_jacobian=expected_jacobian)
+    print("Reprojection residual:", error)
+    print("Residual/Jacobian reference differences:", error_difference.sum(), jacobian_difference.sum())
+    print("Maximum finite-difference Jacobian error:", finite_difference_error)
+    return {"check_file": filename, "residual": error.tolist(),
+            "jacobian": derivatives.tolist(),
+            "residual_reference_sum_absolute_difference": float(error_difference.sum()),
+            "jacobian_reference_sum_absolute_difference": float(jacobian_difference.sum()),
+            "max_finite_difference_jacobian_error": float(finite_difference_error)}
 
 
 def main():
@@ -77,10 +120,12 @@ def main():
             print("Maximum difference from supplied example:", errors[best])
         records.append(record)
         print(f"Pair {index+1}-{index+2}: proper rotations and unit translations verified")
+    linear_check = check_linear_triangulation(k)
     result = {"focal_length": FOCAL_LENGTH, "intrinsic_matrix": k.tolist(),
               "pose_convention": "X2 = R @ X1 + t; translation has unit length",
               "example_pose": EXAMPLE_RT.tolist(), "records": records,
-              "linear_triangulation_check": check_linear_triangulation(k)}
+              "linear_triangulation_check": linear_check,
+              "reprojection_check": check_reprojection()}
     (OUT / "results.json").write_text(json.dumps(result, indent=2) + "\n",
                                       encoding="utf-8")
 
