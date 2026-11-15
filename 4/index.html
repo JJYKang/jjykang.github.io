@@ -162,6 +162,12 @@
       <p>The product MS approximates the centered image coordinates; adding the saved row means restores the original image translations. The factors describe an affine reconstruction, with no metric upgrade applied.</p>
 
       <h3 id="part3c">3(c): Reconstruction and Ground Truth</h3>
+      <div class="stack-sheet img-card">
+        <a href="./media/part3/set1_reconstruction_comparison.png"><img src="./media/part3/set1_reconstruction_comparison.png" alt="Full-set factorization and ground truth on matching 3D axes, showing similar point arrangements with residual shape differences" width="1800" height="864" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Full Set: 37 Points</div>Reconstruction centered, uniformly scaled, and orthogonally aligned for comparison, allowing reflection for the arbitrary SVD axis signs. Matching colors identify corresponding points; both plots use the same axis limits and viewing angle.</div>
+      </div>
+      <p>The reconstruction recovers the overall point arrangement, although some relative dimensions and point positions differ. After the display alignment, the 3D point RMSE is 1.6876 in the ground-truth coordinate units.</p>
+      <p>Scale and orientation are not fixed by the factorization: a rotation or scaling of S can be absorbed into M without changing their product. More generally, MS = (MA)(A<sup>&minus;1</sup>S) for any invertible A. Our implementation stops at this affine factorization, so its ambiguity also includes shear and unequal axis scaling. The clouds therefore need not be identical after only rotation and uniform scaling. The remaining differences also reflect the affine approximation to perspective images and errors in the measured correspondences.</p>
 
       <h3 id="part3d">3(d): Singular Values</h3>
 

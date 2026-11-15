@@ -180,6 +180,17 @@ all four singular values. `media/part3/results.json` records the singular values
 and reprojection RMSE per image coordinate. The script checks that the discarded
 singular value equals the Frobenius norm of the reconstruction residual.
 
+For 3(c), the script also plots the full-set reconstruction beside the supplied
+3D ground truth in `media/part3/set1_reconstruction_comparison.png`. Display
+alignment fits translation, a single uniform scale, and an orthogonal orientation
+(reflection allowed for the arbitrary SVD axis signs). It does not fit a general
+affine transform, modify the estimated factors, or use ground truth during
+factorization. Both panels have equal axis scaling, identical limits, matching
+point colors, and the same view. `set1_comparison.npz` stores ground truth,
+display-aligned points, and point errors; alignment parameters and RMSE are in
+`results.json`. Matplotlib uses the Agg backend; the ignored `.deps/` directory
+is a fallback for checkout-local packages and `.preview/` holds its font cache.
+
 To preview from the repository root:
 
 ```sh

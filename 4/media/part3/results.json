@@ -17,7 +17,32 @@
         27.915195603993517
       ],
       "coordinate_reprojection_rmse_px": 2.294614943863746,
-      "factorization_file": "set1_factorization.npz"
+      "factorization_file": "set1_factorization.npz",
+      "ground_truth_comparison": {
+        "plot": "set1_reconstruction_comparison.png",
+        "display_alignment": "translation, uniform scale, orthogonal orientation",
+        "scale": 1.7009314717584365,
+        "orientation": [
+          [
+            -0.21371012442671158,
+            0.5080727709871912,
+            0.8343800345759216
+          ],
+          [
+            0.9765409169371478,
+            0.08804466363382775,
+            0.19650947751485193
+          ],
+          [
+            0.026378405279197395,
+            0.8568023089295471,
+            -0.5149698856709229
+          ]
+        ],
+        "allows_reflection": true,
+        "point_rmse": 1.6876217644950395,
+        "relative_point_rmse": 0.14548200783411294
+      }
     },
     {
       "dataset": "set1_subset",

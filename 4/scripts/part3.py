@@ -1,5 +1,6 @@
-"""Generate full-set and subset affine factorizations for Problem 3(a)."""
+"""Generate affine factorizations and the full-set comparison for Problem 3."""
 import json
+import os
 from pathlib import Path
 import sys
 
@@ -10,7 +11,67 @@ import numpy as np
 from factorization import build_measurement_matrix, factorization_method
 from part1 import DATA, load_image_points
 
+# Support the ignored local package directory used for this checkout's plots.
+os.environ.setdefault("MPLCONFIGDIR", str(ROOT / ".preview" / "matplotlib"))
+try:
+    import matplotlib
+except ModuleNotFoundError:
+    sys.path.insert(0, str(ROOT / ".deps"))
+    import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
 OUT = ROOT / "media" / "part3"
+
+
+def align_similarity(points, target):
+    """Fit translation, uniform scale, and orthogonal orientation for display only."""
+    center = points.mean(axis=0)
+    target_center = target.mean(axis=0)
+    centered = points - center
+    centered_target = target - target_center
+    u, _, vt = np.linalg.svd(centered.T @ centered_target)
+    orientation = u @ vt
+    scale = np.sum((centered @ orientation) * centered_target) / np.sum(centered**2)
+    aligned = scale * centered @ orientation + target_center
+    return aligned, scale, orientation
+
+
+def save_full_comparison(structure):
+    """Compare the full reconstruction with ground truth using common 3D axes."""
+    truth = np.loadtxt(DATA / "set1" / "pt_3D.txt", skiprows=1)
+    if truth.shape != (structure.shape[1], 3):
+        raise ValueError("Ground-truth points do not match the reconstructed points")
+    aligned, scale, orientation = align_similarity(structure.T, truth)
+    errors = np.linalg.norm(aligned-truth, axis=1)
+    rmse = np.sqrt(np.mean(errors**2))
+    extent = np.sqrt(np.mean(np.sum((truth-truth.mean(axis=0))**2, axis=1)))
+    np.savez_compressed(OUT / "set1_comparison.npz", ground_truth=truth,
+                        display_aligned_structure=aligned, errors=errors)
+
+    combined = np.vstack((aligned, truth))
+    center = (combined.min(axis=0)+combined.max(axis=0)) / 2
+    radius = np.ptp(combined, axis=0).max() * .55
+    colors = plt.get_cmap("viridis")(np.linspace(0, 1, len(truth)))
+    fig = plt.figure(figsize=(10, 4.8), layout="constrained")
+    for index, (points, title) in enumerate(
+            [(aligned, "Factorization (display aligned)"), (truth, "Ground truth")], 1):
+        ax = fig.add_subplot(1, 2, index, projection="3d")
+        ax.scatter(*points.T, c=colors, s=30, edgecolors="white", linewidths=.3,
+                   depthshade=False)
+        for setter, mid in zip((ax.set_xlim, ax.set_ylim, ax.set_zlim), center):
+            setter(mid-radius, mid+radius)
+        ax.set_box_aspect((1, 1, 1))
+        ax.view_init(elev=20, azim=-60)
+        ax.set(xlabel="X", ylabel="Y", zlabel="Z", title=title)
+        ax.tick_params(labelsize=8)
+    filename = "set1_reconstruction_comparison.png"
+    fig.savefig(OUT / filename, dpi=180)
+    plt.close(fig)
+    return {"plot": filename, "display_alignment": "translation, uniform scale, orthogonal orientation",
+            "scale": float(scale), "orientation": orientation.tolist(),
+            "allows_reflection": True, "point_rmse": float(rmse),
+            "relative_point_rmse": float(rmse / extent)}
 
 
 def main():
@@ -34,6 +95,8 @@ def main():
                   "singular_values": values.tolist(),
                   "coordinate_reprojection_rmse_px": float(np.sqrt(np.mean(residual**2))),
                   "factorization_file": filename}
+        if name == "set1":
+            record["ground_truth_comparison"] = save_full_comparison(structure)
         records.append(record)
         print(f"{name}: structure {structure.shape}, motion {motion.shape}")
         print("Singular values:", values)
