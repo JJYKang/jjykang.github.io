@@ -1,4 +1,4 @@
-"""Check pose candidates, linear triangulation, and reprojection derivatives."""
+"""Check pose candidates, reprojection derivatives, and linear/nonlinear triangulation."""
 import json
 from pathlib import Path
 import sys
@@ -8,7 +8,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 import numpy as np
 from triangulation import (estimate_initial_RT, linear_estimate_3d_point,
-                           reprojection_error, jacobian)
+                           reprojection_error, jacobian, nonlinear_estimate_3d_point)
 
 DATA = ROOT / "assignment 4 code" / "data"
 OUT = ROOT / "media" / "part4"
@@ -85,6 +85,33 @@ def check_reprojection():
             "max_finite_difference_jacobian_error": float(finite_difference_error)}
 
 
+def check_nonlinear_triangulation():
+    """Compare DLT and ten-step Gauss-Newton on the supplied four-view test."""
+    image_points = np.load(DATA / "unit_test_image_matches.npy")
+    cameras = np.load(DATA / "unit_test_camera_matrix.npy")
+    linear = linear_estimate_3d_point(image_points, cameras)
+    nonlinear = nonlinear_estimate_3d_point(image_points, cameras)
+    linear_error = reprojection_error(linear, image_points, cameras)
+    nonlinear_error = reprojection_error(nonlinear, image_points, cameras)
+    linear_norm = np.linalg.norm(linear_error)
+    nonlinear_norm = np.linalg.norm(nonlinear_error)
+    if not nonlinear_norm < linear_norm:
+        raise ValueError("Nonlinear triangulation does not improve the supplied test's reprojection error")
+    gradient = jacobian(nonlinear, cameras).T @ nonlinear_error
+    filename = "nonlinear_triangulation_check.npz"
+    np.savez_compressed(OUT / filename, image_points=image_points,
+                        camera_matrices=cameras, linear_point=linear,
+                        nonlinear_point=nonlinear, linear_residual=linear_error,
+                        nonlinear_residual=nonlinear_error, final_gradient=gradient)
+    print("Linear/nonlinear reprojection error norms:", linear_norm, nonlinear_norm)
+    print("Final Gauss-Newton point:", nonlinear)
+    return {"check_file": filename, "iterations": 10,
+            "linear_point": linear.tolist(), "nonlinear_point": nonlinear.tolist(),
+            "linear_reprojection_error_norm": float(linear_norm),
+            "nonlinear_reprojection_error_norm": float(nonlinear_norm),
+            "final_gradient_norm": float(np.linalg.norm(gradient))}
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     matrices = np.load(DATA / "statue" / "fundamental_matrices.npy",
@@ -125,7 +152,8 @@ def main():
               "pose_convention": "X2 = R @ X1 + t; translation has unit length",
               "example_pose": EXAMPLE_RT.tolist(), "records": records,
               "linear_triangulation_check": linear_check,
-              "reprojection_check": check_reprojection()}
+              "reprojection_check": check_reprojection(),
+              "nonlinear_triangulation_check": check_nonlinear_triangulation()}
     (OUT / "results.json").write_text(json.dumps(result, indent=2) + "\n",
                                       encoding="utf-8")
 

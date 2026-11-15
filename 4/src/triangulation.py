@@ -100,3 +100,20 @@ def jacobian(point_3d, camera_matrices):
                    - predicted[:, :, None] * cameras[:, 2:3, :3])
     derivatives /= projected[:, 2, None, None]
     return derivatives.reshape(-1, 3)
+
+
+def nonlinear_estimate_3d_point(image_points, camera_matrices):
+    """Refine the DLT estimate with exactly ten undamped Gauss-Newton updates."""
+    point = linear_estimate_3d_point(image_points, camera_matrices)
+    for _ in range(10):
+        error = reprojection_error(point, image_points, camera_matrices)
+        derivatives = jacobian(point, camera_matrices)
+        # Solving J*step ~= error avoids explicitly forming and inverting J.T*J.
+        step, _, rank, _ = np.linalg.lstsq(derivatives, error, rcond=None)
+        if rank < 3:
+            raise ValueError("The reprojection Jacobian does not constrain a unique 3D update")
+        point = point - step
+        if not np.isfinite(point).all():
+            raise ValueError("Gauss-Newton produced a nonfinite 3D point")
+    _project_point(point, camera_matrices)
+    return point

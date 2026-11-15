@@ -5,7 +5,7 @@ Problem 1 is implemented in `src/fundamental.py`, with result generation in
 `scripts/part1.py`. Problem 2 uses `src/rectification.py` and `src/warping.py`, with
 Set 1 checks and image exports in `scripts/part2.py`. Problem 3(a) uses
 `src/factorization.py`, with full/subset result generation in `scripts/part3.py`.
-Problems 4(a-c) use `src/triangulation.py`, with pose, triangulation, and derivative checks
+Problems 4(a-d) use `src/triangulation.py`, with pose, triangulation, and derivative checks
 in `scripts/part4.py`.
 Remaining algorithms and result scripts will be added as
 each part is implemented. The supplied
@@ -200,7 +200,7 @@ out-of-plane spread. Ground-truth and aligned-reconstruction coordinate ranges
 are saved in `results.json`; `set1_subset_comparison.npz` stores the compared
 points and errors. No subset comparison uses the full-set points for fitting.
 
-Generate the Problem 4(a-c) pose, triangulation, and reprojection checks from inside `4/`:
+Generate the Problem 4(a-d) pose, triangulation, and reprojection checks from inside `4/`:
 
 ```sh
 python scripts/part4.py
@@ -240,6 +240,16 @@ the starter's reference point, rather than the slightly different DLT estimate,
 and compare the residuals and Jacobian against the supplied values and central
 finite differences. Inputs and arrays are saved in `reprojection_check.npz`,
 with summary errors in `results.json`.
+
+`nonlinear_estimate_3d_point(image_points, camera_matrices)` initializes with
+DLT and performs exactly ten undamped Gauss-Newton updates, without early
+termination. Each step solves `J * step ~= error` with `np.linalg.lstsq` and
+subtracts the step, equivalent to the normal-equation update for full-rank J
+without explicitly forming or inverting `J.T @ J`. Rank-deficient updates and
+nonfinite estimates are rejected. As specified, no damping or convergence
+guarantee is added. The script checks improvement on the supplied four-view
+test and saves both points, residuals, and the final gradient in
+`nonlinear_triangulation_check.npz`, with summary values in `results.json`.
 
 To preview from the repository root:
 

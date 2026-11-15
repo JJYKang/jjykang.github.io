@@ -566,5 +566,22 @@
     "residual_reference_sum_absolute_difference": 8.301300272782822e-07,
     "jacobian_reference_sum_absolute_difference": 1.817110373281139e-08,
     "max_finite_difference_jacobian_error": 2.067787363557727e-08
+  },
+  "nonlinear_triangulation_check": {
+    "check_file": "nonlinear_triangulation_check.npz",
+    "iterations": 10,
+    "linear_point": [
+      -0.5790245606662688,
+      -5.059380679628972,
+      5.203966920478717
+    ],
+    "nonlinear_point": [
+      -0.920557943788931,
+      -4.639935560377948,
+      4.473051157802011
+    ],
+    "linear_reprojection_error_norm": 98.73542356894183,
+    "nonlinear_reprojection_error_norm": 95.59481784846037,
+    "final_gradient_norm": 5.702502769047193e-12
   }
 }
