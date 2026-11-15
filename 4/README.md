@@ -5,7 +5,8 @@ Problem 1 is implemented in `src/fundamental.py`, with result generation in
 `scripts/part1.py`. Problem 2 uses `src/rectification.py` and `src/warping.py`, with
 Set 1 checks and image exports in `scripts/part2.py`. Problem 3(a) uses
 `src/factorization.py`, with full/subset result generation in `scripts/part3.py`.
-Problem 4(a) uses `src/triangulation.py`, with pose checks in `scripts/part4.py`.
+Problems 4(a-b) use `src/triangulation.py`, with pose and triangulation checks
+in `scripts/part4.py`.
 Remaining algorithms and result scripts will be added as
 each part is implemented. The supplied
 `assignment 4 code/` folder is preserved unchanged.
@@ -199,7 +200,7 @@ out-of-plane spread. Ground-truth and aligned-reconstruction coordinate ranges
 are saved in `results.json`; `set1_subset_comparison.npz` stores the compared
 points and errors. No subset comparison uses the full-set points for fitting.
 
-Generate the Problem 4(a) pose candidates from inside `4/`:
+Generate the Problem 4(a-b) pose candidates and linear triangulation check from inside `4/`:
 
 ```sh
 python scripts/part4.py
@@ -215,6 +216,19 @@ both signs of the third column of U as unit translation. Poses follow
 in 4(e). Saved `.npy` arrays and `media/part4/results.json` include all candidates;
 the script checks rotation orthogonality, determinant +1, translation lengths,
 and agreement with the supplied first-pair example to its four-decimal precision.
+
+`linear_estimate_3d_point(image_points, camera_matrices)` takes `M-by-2`
+observations and `M-by-3-by-4` projective cameras, with at least two views.
+For each view it stacks `x*P[2]-P[0]` and `y*P[2]-P[1]`, takes the last right
+singular vector, and divides by its fourth homogeneous coordinate. It rejects
+underconstrained geometry, points at infinity, and undefined projections.
+The script reproduces the starter's first-match test with the rounded example
+pose, saving inputs and the estimated point in `linear_triangulation_check.npz`
+and its errors in `results.json`. It does not select a pose by depth yet.
+For the supplied rounded camera pose and first match, homogeneous DLT returns
+approximately `(0.676717, -1.102419, 4.660340)`. The starter's reference is
+`(0.6774, -1.1029, 4.6621)`, with summed absolute difference about 0.002924;
+the script records this difference rather than claiming four-decimal agreement.
 
 To preview from the repository root:
 

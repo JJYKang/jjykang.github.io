@@ -517,5 +517,20 @@
         0.9999999999999998
       ]
     }
-  ]
+  ],
+  "linear_triangulation_check": {
+    "check_file": "linear_triangulation_check.npz",
+    "estimated_point": [
+      0.6767168598852709,
+      -1.1024188346890385,
+      4.660340000122012
+    ],
+    "expected_point": [
+      0.6774,
+      -1.1029,
+      4.6621
+    ],
+    "sum_absolute_difference": 0.002924305303678043,
+    "max_absolute_difference": 0.0017599998779873616
+  }
 }
