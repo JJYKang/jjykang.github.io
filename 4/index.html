@@ -183,6 +183,15 @@
       <p>The issue is the subset's geometry as well as its smaller size. These points provide strong variation in two directions but very little in the third, making the out-of-plane structure poorly constrained. Correspondence errors and perspective effects can then make a substantial contribution to the third retained SVD component. The full set spans a broader 3D structure and constrains this component more strongly.</p>
 
       <h3 id="part3f">3(f): Singular-Value Comparison</h3>
+      <div class="table-scroll"><table>
+        <thead><tr><th scope="col">Point Set</th><th scope="col">&sigma;<sub>1</sub></th><th scope="col">&sigma;<sub>2</sub></th><th scope="col">&sigma;<sub>3</sub></th><th scope="col">&sigma;<sub>4</sub></th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Full set (37 points)</th><td>959.5852</td><td>540.4761</td><td>184.4317</td><td>27.9152</td></tr>
+          <tr><th scope="row">Subset (18 points)</th><td>264.5440</td><td>210.0607</td><td>7.2192</td><td>5.1286</td></tr>
+        </tbody>
+      </table></div>
+      <p>All four singular values decrease because the subset contains fewer points and covers a smaller spatial extent. The largest relative change is in the third component: &sigma;<sub>3</sub> falls from 184.4317 to 7.2192, while &sigma;<sub>3</sub>/&sigma;<sub>2</sub> drops from 0.3412 to 0.0344. This agrees with the nearly planar subset, whose measurements are dominated by two directions of variation.</p>
+      <p>The third and fourth singular values are also much closer: &sigma;<sub>3</sub>/&sigma;<sub>4</sub> falls from 6.6069 to 1.4076. The third component retained for reconstruction is therefore less clearly separated from the component discarded as affine-model residual. It is more sensitive to measurement errors and perspective effects, explaining the unreliable out-of-plane structure in 3(e).</p>
     </section>
 
     <section id="part4">
