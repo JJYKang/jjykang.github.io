@@ -1,4 +1,3 @@
-"""Problem 4 API; running this entry point executes checks and reconstruction."""
 from pathlib import Path
 import runpy
 import sys

@@ -1,9 +1,8 @@
-"""Inverse projective warping with NumPy interpolation."""
 import numpy as np
 
 
 def warp_bounds(image_shape, h):
-    """Return ((height, width), (left, top)) enclosing transformed pixel centers."""
+    # return ((height, width), (left, top)) enclosing transformed pixel centers
     height, width = image_shape[:2]
     corners = np.array([[0, 0, 1], [width - 1, 0, 1],
                         [width - 1, height - 1, 1], [0, height - 1, 1]]) @ h.T
@@ -71,18 +70,10 @@ def _warp(image, h, method, output_shape, origin):
 
 
 def warpImageNearestNeighbor(im, H, output_shape=None, origin=None):
-    """Return (warped, valid_mask, (left, top)) using rounded source coordinates.
-
-    H maps source to destination. output_shape is (height, width); origin is
-    the destination coordinate of output pixel (0, 0). By default the canvas
-    encloses the transformed image. Pixel centers have integer coordinates.
-    """
+    # inverse warp using rounded source coordinates
     return _warp(im, H, "nearest", output_shape, origin)
 
 
 def warpImageBilinear(im, H, output_shape=None, origin=None):
-    """Return (warped, valid_mask, origin) using four weighted source neighbors.
-
-    Uses the same canvas and coordinate conventions as warpImageNearestNeighbor.
-    """
+    # inverse warp using four weighted source neighbors
     return _warp(im, H, "bilinear", output_shape, origin)

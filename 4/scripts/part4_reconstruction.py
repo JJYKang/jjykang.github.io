@@ -1,4 +1,3 @@
-"""Run the supplied structure-from-motion framework with our triangulation code."""
 import argparse
 import json
 import os
@@ -47,7 +46,7 @@ def save_plot(points):
 
 
 def normalize_reconstruction_frame(frame):
-    """Set Camera 1 to the world origin and its baseline to Camera 2 to unit length."""
+    # set Camera 1 to the world origin and its baseline to Camera 2 to unit length
     reference = frame.motion[0].copy()
     rotation, translation = reference[:, :3], reference[:, 3]
     frame.structure = frame.structure @ rotation.T + translation

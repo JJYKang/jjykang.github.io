@@ -1,4 +1,3 @@
-"""Generate affine factorizations and ground-truth comparisons for Problem 3."""
 import json
 import os
 from pathlib import Path
@@ -25,7 +24,7 @@ OUT = ROOT / "media" / "part3"
 
 
 def align_similarity(points, target):
-    """Fit translation, uniform scale, and orthogonal orientation for display only."""
+    # fit translation, uniform scale, and orthogonal orientation for display only
     center = points.mean(axis=0)
     target_center = target.mean(axis=0)
     centered = points - center
@@ -38,7 +37,7 @@ def align_similarity(points, target):
 
 
 def save_comparison(name, structure):
-    """Compare reconstruction and ground truth, with an edge view for the subset."""
+    # compare reconstruction and ground truth, with an edge view for the subset
     truth = np.loadtxt(DATA / name / "pt_3D.txt", skiprows=1)
     if truth.shape != (structure.shape[1], 3):
         raise ValueError("Ground-truth points do not match the reconstructed points")

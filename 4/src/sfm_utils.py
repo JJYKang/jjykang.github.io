@@ -1,4 +1,3 @@
-"""Adapted supplied SfM framework; imports and track/view filtering corrected."""
 import numpy as np
 import os
 from scipy.optimize import least_squares
@@ -29,24 +28,11 @@ class Frame:
         self.motion[1,:,:] = self.T
         self.structure = triangulate(self)
 
-'''
-NEG_ONES
-Arguments:
-    size - the dimensions of a tensor given as a tuple or array
-    dtype - the numpy type of the tensor
-Returns:
-    neg_ones - similar to np.zeros or np.ones, but with -1
-'''
+# create an array of missing-match indices
 def neg_ones(size, dtype = np.int16):
     return -1 * np.ones(size, dtype = dtype)
 
-'''
-TRIANGULATE
-Arguments:
-    frame - information about multiple views of the scene
-Returns:
-    structure - the 3D points of the scene
-'''
+# triangulate each track using the cameras where it is visible
 def triangulate(frame):
     num_cameras, num_points = frame.match_idx.shape
     structure = np.zeros((num_points,3))
@@ -63,13 +49,7 @@ def triangulate(frame):
 
     return structure 
 
-'''
-ROTATION_MATRIX_TO_ANGLE_AXIS
-Arguments:
-    R - a rotation matrix
-Returns:
-    angle_axis - the angle axis representation of the rotation
-'''
+# convert a rotation matrix to angle-axis form
 def rotation_matrix_to_angle_axis(R):
     angle_axis = np.array([0.0]*3)
     angle_axis[0] = R[2, 1] - R[1, 2]
@@ -102,13 +82,7 @@ def rotation_matrix_to_angle_axis(R):
 
     return angle_axis
 
-'''
-ROTATION_MATRIX_TO_ANGLE_AXIS
-Arguments:
-    angle_axis - the angle axis representation of the rotation
-Returns:
-    R - the corresponding rotation matrix
-'''
+# convert angle-axis form to a rotation matrix
 def angle_axis_to_rotation_matrix(angle_axis):
     theta2 = np.dot(angle_axis, angle_axis)
     R = np.zeros((3,3))
@@ -140,13 +114,7 @@ def angle_axis_to_rotation_matrix(angle_axis):
         R[2, 2] = 1;
     return R
 
-'''
-CROSS_PRODUCT_MAT
-Arguments:
-    a - a 3x1 vector
-Returns:
-    m - the corresponding cross-product matrix [a]_x
-'''
+# build the matrix for the cross product with a
 def cross_product_mat(a):
     m = np.zeros((3,3))
     m[1,0] = a[2]
@@ -157,14 +125,7 @@ def cross_product_mat(a):
     m[1,2] = -a[0]
     return m
 
-'''
-ANGLE_AXIS_ROTATE
-Arguments:
-    angle_axis - the angle axis representation of the rotation
-    pt - a matrix containing points
-Returns:
-    new_pts - a matrix containing the points after the rotation is applied
-'''
+# rotate points using the angle-axis representation
 def angle_axis_rotate(angle_axis, pt):
     aa = angle_axis[:3].reshape((1,3))
     theta2 = aa.dot(aa.T)[0,0]
@@ -185,20 +146,7 @@ def angle_axis_rotate(angle_axis, pt):
     return result
         
 
-'''
-REPROJECTION_ERROR_MOT_STR
-Arguments:
-    match_idx - a MxN matrix corresponding to what indices of the match_points
-        are visible in each of the M cameras
-    match_points - the pixel locations in the image
-    f - the focal length
-    px - the principal component in the x direction
-    py - the principal component in the y direction
-    motion - the camera's motion tensor
-    structure - the current 3D point estimate of the scene
-Returns:
-    errors - the reprojection error vector
-'''
+# project visible points and subtract their measured positions
 def reprojection_error_mot_str(match_idx, match_points, f, px, py, motion, structure):
     N = match_idx.shape[0]
 
@@ -228,20 +176,7 @@ def reprojection_error_mot_str(match_idx, match_points, f, px, py, motion, struc
             errors = np.hstack((errors, np.vstack((x-ox, y-oy))))
 
     return errors.flatten()
-'''
-REPROJECTION_ERROR_MOT_STR_OPT
-Arguments:
-    mot_str - the motion and structure matrices flattened into one vector
-        this allows us to use the builtin nonlinear optimization methods
-    match_idx - a MxN matrix corresponding to what indices of the match_points
-        are visible in each of the M cameras
-    match_points - the pixel locations in the image
-    f - the focal length
-    px - the principal component in the x direction
-    py - the principal component in the y direction
-Returns:
-    errors - the reprojection error vector
-'''
+# unpack motion and structure for the least-squares solver
 def reprojection_error_mot_str_opt(mot_str, match_idx, match_points, f, px, py):
     num_cameras = match_idx.shape[0]
     cut = 3 * 2 * num_cameras
@@ -251,13 +186,7 @@ def reprojection_error_mot_str_opt(mot_str, match_idx, match_points, f, px, py):
     error = reprojection_error_mot_str(match_idx, match_points, f, px, py, motion, structure)
     return error
 
-'''
-BUNDLE_ADJUSTMENT
-Arguments:
-    frame - the information about multiple views of the scene
-Returns:
-    Nothing; updates the motion and structure information
-'''
+# jointly refine camera poses and 3D points to reduce reprojection error
 def bundle_adjustment(frame):
     num_cameras = frame.motion.shape[0]
     motion_angle_axis = np.zeros((num_cameras, 3, 2))
@@ -288,52 +217,21 @@ def bundle_adjustment(frame):
     for i in range(num_cameras):
         frame.motion[i,:,:] = np.hstack((angle_axis_to_rotation_matrix(motion_angle_axis[i,:,0]), motion_angle_axis[i,:,1].reshape((3,1))))
 
-'''
-MULTIPLY_TRANSFORMATIONS
-Arguments:
-    A - a matrix
-    B - another matrix
-Returns:
-    M - the matrix that occurs when you rotate B by A's rotation component
-        and then translate by A's translation component
-'''
+# compose two rotation-translation transforms
 def multiply_transformations(A, B):
     return np.hstack((A[:,:3].dot(B[:,:3]), (A[:,:3].dot(B[:,-1]) + A[:,-1]).reshape((3,-1))))
 
-'''
-INVERSE
-Arguments:
-    x - a 3x4 matrix that assumes only rotation and translation
-Returns:
-    inv_x - the 3x4 matrix inverse of x
-'''
+# invert a rotation-translation transform
 def inverse(x):
     return np.hstack((x[:3, :3].T, -x[:3, :3].T.dot(x[:3, -1]).reshape((3,-1))))
 
-'''
-TRANSFORM_POINTS
-Arguments:
-    points_3d - 3d points listed as a 3xN matrix
-    Rt - the 3x4 transformation matrix
-    is_inverse - whether to use the inverted Rt or non-inverted
-Returns:
-    new_points - the points after applying the Rt
-'''
+# apply the transform or its inverse to the 3D points
 def transform_points(points_3d, Rt, is_inverse = False):
     if is_inverse:
         return Rt[:,:3].T.dot((points_3d - Rt[:,-1]).T).T
     return Rt[:,:3].dot(points_3d.T).T + Rt[:,-1]
 
-'''
-ROW_INTERSECTION
-Arguments:
-    A - a matrix
-    B - another matrix
-Returns:
-    intersect - a matrix whose rows are both rows in A and B
-    idA - indices of these rows in A
-    idB - indices of these rows in B
-'''
+# find shared rows and their indices in both arrays
 def row_intersection(A, B):
     nrows, ncols = A.shape
     dtype={'names':['f{}'.format(i) for i in range(ncols)],
@@ -344,16 +242,7 @@ def row_intersection(A, B):
     idB = np.array([np.where(np.all(B==x, axis=1))[0][0] for x in intersect])
     return intersect, idA, idB
 
-'''
-ROW_SET_DIFF
-Arguments:
-    A - a matrix
-    B - another matrix
-Returns:
-    set_diff - a matrix whose rows are only in one of A or B
-    idA - indices of these rows in A
-    idB - indices of these rows in B
-'''
+# find rows in A that are absent from B
 def row_set_diff(A, B):
     nrows, ncols = A.shape
     dtype={'names':['f{}'.format(i) for i in range(ncols)],
@@ -372,14 +261,7 @@ def row_set_diff(A, B):
 
     return set_diff, np.array(idA), np.array(idB)
 
-'''
-REMOVE_OUTLIERS
-Arguments:
-    frame - the information about multiple views of the scene
-    threshold - a threshold for the sum square of the reprojection error
-Returns:
-    Nothing; updated frame information (structure)
-'''
+# reject points with large reprojection errors or small viewing angles
 def remove_outliers(frame, threshold = 10.0):
     threshold *= threshold
     threshold_in_degree = 2.0
@@ -431,16 +313,7 @@ def remove_outliers(frame, threshold = 10.0):
     frame.structure = frame.structure[pts2keep, :]
     frame.match_idx = frame.match_idx[:,pts2keep]
 
-'''
-MERGE_TWO_FRAMES
-Arguments:
-    frameA - a frame 
-    frameB - another frame, we assume the first index of frameB corresponds to
-        the last camera index of frameA
-    length - the number of total cameras
-Returns:
-    merged_frame - the merged information of both frames
-'''
+# align adjacent frames through their shared camera and combine tracks
 def merge_two_frames(frameA, frameB, length):
     merged_frame = deepcopy(frameA)
 
@@ -452,10 +325,7 @@ def merge_two_frames(frameA, frameB, length):
     # since camera is in merged reference frame, add it to motion matrix
     merged_frame.motion = np.vstack((merged_frame.motion, frameB.motion[-1,:,:].reshape((-1,3,4))))
 
-    # we need to reconcile the matched points to generate the structure.
-    # we need to merge the matched_points from each additional frame, but must 
-    # associate points that correspond to already seen points in the same
-    # column
+    # join tracks that share a point in the overlapping camera
     trA = np.where(frameA.match_idx[-1,:] >= 0)[0]
     xyA = frameA.match_points[frameA.match_idx[-1, trA], :]
 
@@ -475,8 +345,7 @@ def merge_two_frames(frameA, frameB, length):
         merged_frame.match_points = np.vstack((merged_frame.match_points, frameB.match_points[B_match_idx, :]))
         merged_frame.match_idx[length, idA] = merged_frame.match_points.shape[0]-1
 
-    # One of the cameras in frame B is the same as frame A
-    # We will add all new points from this camera into the match fields
+    # add new tracks from the shared camera
     xy_new, iB, iA = row_set_diff(xyB, xyA)
     xy_new = xy_new.T
 
@@ -493,19 +362,11 @@ def merge_two_frames(frameA, frameB, length):
         merged_frame.match_points = np.vstack((merged_frame.match_points, frameB.match_points[B_match_idx,:]))
         merged_frame.match_idx[length,-1] = merged_frame.match_points.shape[0]-1
 
-    # The other camera in frame B is new
-    # We can simply add all the points from here
-    # TODO: This part is not implemented currently, but a full SFM pipeline should have it 
+    # unmatched observations from the new camera are not added as separate tracks
 
     return merged_frame
 
-'''
-MERGE_ALL_FRAMES
-Arguments:
-    frames - a list of frames
-Returns:
-    merged_frame - a frame which contains the information of all the frames
-'''
+# merge frames in order, refining and filtering after each merge
 def merge_all_frames(frames):
     merged_frame = deepcopy(frames[0])
     for i in range(1,len(frames)):
@@ -519,11 +380,7 @@ def merge_all_frames(frames):
 
 
 def triangulate_dense_matches(image_points, camera_matrices, batch_size=4096):
-    """Batch the same DLT initialization and ten Gauss-Newton steps used in 4(b-d).
-
-    Return (points, valid_mask); failed triangulations have NaN coordinates.
-    Batched SVD solves the updates without forming normal equations.
-    """
+    # batch DLT and ten Gauss-Newton updates; mark failed points invalid
     observations = np.asarray(image_points, dtype=float)
     cameras = np.asarray(camera_matrices, dtype=float)
     if (observations.ndim != 3 or observations.shape[2] != 2

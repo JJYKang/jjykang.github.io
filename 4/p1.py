@@ -1,4 +1,3 @@
-"""Problem 1 API; implementations are shared with the report scripts in src/."""
 from pathlib import Path
 import runpy
 import sys

@@ -1,4 +1,3 @@
-"""Check pose candidates, reprojection derivatives, and linear/nonlinear triangulation."""
 import json
 from pathlib import Path
 import sys
@@ -20,7 +19,7 @@ EXAMPLE_RT = np.array([[0.9736, -0.0988, -0.2056, 0.9994],
 
 
 def check_linear_triangulation(k):
-    """Run the same rounded-pose, first-match check as the supplied p4.py."""
+    # run the same rounded-pose, first-match check as the supplied p4.py
     matches = np.load(DATA / "statue" / "matches_subset.npy",
                       allow_pickle=True, encoding="latin1")[0]
     image_points = matches[0][:, 0].reshape(2, 2)
@@ -45,7 +44,7 @@ def check_linear_triangulation(k):
 
 
 def check_reprojection():
-    """Verify the supplied residual/Jacobian and a central-difference derivative."""
+    # verify the supplied residual/Jacobian and a central-difference derivative
     with np.load(OUT / "linear_triangulation_check.npz") as inputs:
         point = inputs["expected_point"]
         image_points = inputs["image_points"]
@@ -87,7 +86,7 @@ def check_reprojection():
 
 
 def check_nonlinear_triangulation():
-    """Compare DLT and ten-step Gauss-Newton on the supplied four-view test."""
+    # compare DLT and ten-step Gauss-Newton on the supplied four-view test
     image_points = np.load(DATA / "unit_test_image_matches.npy")
     cameras = np.load(DATA / "unit_test_camera_matrix.npy")
     linear = linear_estimate_3d_point(image_points, cameras)

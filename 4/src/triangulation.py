@@ -1,14 +1,8 @@
-"""Camera pose estimation and projective triangulation."""
 import numpy as np
 
 
 def estimate_initial_RT(E):
-    """Return four 3-by-4 [R | t] candidates as a 4-by-3-by-4 array.
-
-    E follows p2.T @ E @ p1 = 0 for calibrated camera coordinates.
-    Each pose maps points from Camera 1 into Camera 2: X2 = R @ X1 + t.
-    Translation has unit length because its magnitude is not determined by E.
-    """
+    # form four [R | t] candidates mapping Camera 1 to Camera 2, with unit t
     essential = np.asarray(E, dtype=np.float64)
     if (essential.shape != (3, 3) or not np.isfinite(essential).all()
             or not np.any(essential)):
@@ -31,12 +25,7 @@ def estimate_initial_RT(E):
 
 
 def linear_estimate_3d_point(image_points, camera_matrices):
-    """Return a length-three DLT estimate from M image points and cameras, M >= 2.
-
-    image_points has shape (M, 2); camera_matrices has shape (M, 3, 4).
-    Cameras map homogeneous world points to image coordinates. The estimate
-    is expressed in their shared world frame; positive depth is not required.
-    """
+    # triangulate a world point from M-by-2 observations and M camera matrices
     points = np.asarray(image_points, dtype=np.float64)
     cameras = np.asarray(camera_matrices, dtype=np.float64)
     if (points.ndim != 2 or points.shape[1] != 2 or len(points) < 2
@@ -63,7 +52,7 @@ def linear_estimate_3d_point(image_points, camera_matrices):
 
 
 def _project_point(point_3d, camera_matrices):
-    """Validate a finite world point and cameras, then return projective coordinates."""
+    # validate a finite world point and cameras, then return projective coordinates
     point = np.asarray(point_3d, dtype=np.float64)
     cameras = np.asarray(camera_matrices, dtype=np.float64)
     if point.shape != (3,) or not np.isfinite(point).all():
@@ -82,7 +71,7 @@ def _project_point(point_3d, camera_matrices):
 
 
 def reprojection_error(point_3d, image_points, camera_matrices):
-    """Return projected-minus-observed residuals as (dx1, dy1, dx2, dy2, ...)."""
+    # return projected-minus-observed residuals as (dx1, dy1, dx2, dy2, ...)
     projected, _ = _project_point(point_3d, camera_matrices)
     points = np.asarray(image_points, dtype=np.float64)
     if points.shape != (len(projected), 2) or not np.isfinite(points).all():
@@ -92,7 +81,7 @@ def reprojection_error(point_3d, image_points, camera_matrices):
 
 
 def jacobian(point_3d, camera_matrices):
-    """Return the analytic 2M-by-3 reprojection Jacobian, ordered x1, y1, x2, y2."""
+    # return the analytic 2M-by-3 reprojection Jacobian, ordered x1, y1, x2, y2
     projected, cameras = _project_point(point_3d, camera_matrices)
     predicted = projected[:, :2] / projected[:, 2:3]
     # Quotient rule: d(y_i/y_3)/dX = (P_i - (y_i/y_3)*P_3) / y_3.
@@ -103,7 +92,7 @@ def jacobian(point_3d, camera_matrices):
 
 
 def nonlinear_estimate_3d_point(image_points, camera_matrices):
-    """Refine the DLT estimate with exactly ten undamped Gauss-Newton updates."""
+    # refine the DLT estimate with exactly ten undamped Gauss-Newton updates
     point = linear_estimate_3d_point(image_points, camera_matrices)
     for _ in range(10):
         error = reprojection_error(point, image_points, camera_matrices)
@@ -120,7 +109,7 @@ def nonlinear_estimate_3d_point(image_points, camera_matrices):
 
 
 def _pose_depth_counts(candidates, image_points, K):
-    """Count positive depths in both camera frames, excluding failed triangulations."""
+    # count positive depths in both camera frames, excluding failed triangulations
     observations = np.asarray(image_points, dtype=np.float64)
     k = np.asarray(K, dtype=np.float64)
     if (observations.ndim != 3 or observations.shape[1:] != (2, 2)
@@ -147,13 +136,7 @@ def _pose_depth_counts(candidates, image_points, K):
 
 
 def estimate_RT_from_E(E, image_points, K):
-    """Return the 3-by-4 pose with the most triangulated points in front of both cameras.
-
-    image_points has shape (N, 2, 2), with one (x, y) observation per camera.
-    K is the shared intrinsic matrix; X2 = R @ X1 + t, with unit translation.
-    Failed triangulations receive no vote. Tied maxima use the first candidate;
-    if no point has positive depth in both cameras, the pose is rejected.
-    """
+    # choose the pose with the most points in front of both cameras
     candidates = estimate_initial_RT(E)
     counts, _ = _pose_depth_counts(candidates, image_points, K)
     best = int(np.argmax(counts))

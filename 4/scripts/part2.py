@@ -1,4 +1,3 @@
-"""Generate Set 1 epipoles, homographies, and the rectified pair for Problem 2."""
 import json
 from pathlib import Path
 import sys
@@ -17,7 +16,7 @@ OUT = ROOT / "media" / "part2"
 
 
 def save_rectified_pair(images, homographies, points):
-    """Warp both images at the same scale and vertical origin; add scanline guides."""
+    # warp both images at the same scale and vertical origin; add scanline guides
     bounds = [warp_bounds(image.shape, h) for image, h in zip(images, homographies)]
     top = min(origin[1] for _, origin in bounds)
     bottom = max(origin[1]+shape[0]-1 for shape, origin in bounds)

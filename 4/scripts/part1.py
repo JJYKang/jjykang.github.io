@@ -1,4 +1,3 @@
-"""Generate linear and normalized eight-point estimates for both supplied pairs."""
 import json
 from pathlib import Path
 import sys
@@ -16,7 +15,7 @@ OUT = ROOT / "media" / "part1"
 
 
 def load_image_points(path):
-    """Read the supplied (y, x) text rows as homogeneous (x, y, 1) points."""
+    # read the supplied (y, x) text rows as homogeneous (x, y, 1) points
     with path.open() as source:
         count = int(source.readline())
         points = np.loadtxt(source, ndmin=2)
@@ -26,7 +25,7 @@ def load_image_points(path):
 
 
 def line_segment(line, width, height):
-    """Clip ax + by + c = 0 to the image, including vertical lines."""
+    # clip ax + by + c = 0 to the image, including vertical lines
     a, b, c = line
     candidates = []
     if b != 0:
@@ -42,7 +41,7 @@ def line_segment(line, width, height):
 
 
 def save_epipolar_plot(name, method, first, second, f):
-    """Draw corresponding epipolar lines in red and measured points in blue."""
+    # draw corresponding epipolar lines in red and measured points in blue
     panels = []
     font = ImageFont.load_default(size=16)
     for index, points, lines in [(1, first, second @ f),

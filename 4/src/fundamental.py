@@ -1,9 +1,8 @@
-"""Fundamental matrix estimation from corresponding image points."""
 import numpy as np
 
 
 def _prepare_points(points1, points2, min_points=8):
-    """Validate matching finite image points and set their last coordinate to one."""
+    # validate matching finite image points and set their last coordinate to one
     first = np.asarray(points1, dtype=np.float64)
     second = np.asarray(points2, dtype=np.float64)
     if (first.ndim != 2 or first.shape[1] != 3 or second.shape != first.shape
@@ -25,12 +24,7 @@ def _fix_scale(f):
 
 
 def lls_eight_point_alg(points1, points2):
-    """Return rank-two F satisfying p2.T @ F @ p1 approximately equal to zero.
-
-    Inputs are matching n-by-3 homogeneous point arrays, with n >= 8.
-    Fit directly in pixel coordinates without centering or rescaling them.
-    F has unit Frobenius norm, with its largest-magnitude entry positive.
-    """
+    # fit F directly in pixels, with p2.T @ F @ p1 = 0
     first, second = _prepare_points(points1, points2)
 
     # Each outer product supplies one row for p2.T @ F @ p1 = 0.
@@ -51,7 +45,7 @@ def lls_eight_point_alg(points1, points2):
 
 
 def _normalize_points(points):
-    """Center points and scale their mean distance from the origin to sqrt(2)."""
+    # center points and scale their mean distance from the origin to sqrt(2)
     center = points[:, :2].mean(axis=0)
     centered = points[:, :2] - center
     distance = np.linalg.norm(centered, axis=1).mean()
@@ -65,11 +59,7 @@ def _normalize_points(points):
 
 
 def normalized_eight_point_alg(points1, points2):
-    """Estimate rank-two F after independently normalizing both image point sets.
-
-    Inputs and output use the same conventions as lls_eight_point_alg.
-    Return F in the original pixel coordinates, with unit Frobenius norm.
-    """
+    # normalize both point sets before fitting F
     first, second = _prepare_points(points1, points2)
     first, t1 = _normalize_points(first)
     second, t2 = _normalize_points(second)
@@ -79,11 +69,7 @@ def normalized_eight_point_alg(points1, points2):
 
 
 def compute_distance_to_epipolar_lines(points1, points2, F):
-    """Return the mean distance in pixels from points1 to lines F.T @ points2.
-
-    F follows p2.T @ F @ p1 = 0. For distances in the second image, call
-    this function with (points2, points1, F.T). At least one pair is required.
-    """
+    # measure distances in Image 1; swap points and transpose F for Image 2
     first, second = _prepare_points(points1, points2, min_points=1)
     f = np.asarray(F, dtype=np.float64)
     if f.shape != (3, 3) or not np.isfinite(f).all() or not np.any(f):

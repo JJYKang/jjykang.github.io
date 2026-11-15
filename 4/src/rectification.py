@@ -1,15 +1,9 @@
-"""Epipoles and homographies for stereo image rectification."""
 import numpy as np
 from fundamental import _prepare_points
 
 
 def compute_epipole(F):
-    """Return the epipole e satisfying F.T @ e = 0.
-
-    For p2.T @ F @ p1 = 0, this is the epipole in Image 2.
-    Pass F.T for Image 1. Finite epipoles have the form (x, y, 1);
-    epipoles at infinity have a unit direction vector (x, y, 0).
-    """
+    # find the Image 2 epipole; pass F.T for Image 1
     f = np.asarray(F, dtype=np.float64)
     if f.shape != (3, 3) or not np.isfinite(f).all() or not np.any(f):
         raise ValueError("Provide a finite, nonzero 3-by-3 fundamental matrix")
@@ -33,12 +27,7 @@ def compute_epipole(F):
 
 
 def compute_H(e, im):
-    """Return H mapping epipole e to horizontal infinity, using the image center.
-
-    Compose T_inverse @ G @ R @ T: center the image, rotate the epipole
-    onto the x-axis, send it to infinity, then restore the image center.
-    Epipoles already at infinity require rotation only in the centered frame.
-    """
+    # center the image, rotate the epipole onto x, then send it to infinity
     epipole = np.asarray(e, dtype=np.float64)
     if (epipole.shape != (3,) or not np.isfinite(epipole).all()
             or not np.any(epipole)):
@@ -73,11 +62,7 @@ def compute_H(e, im):
 
 
 def compute_matching_homographies(e2, F, im2, points1, points2):
-    """Return H1 and H2 rectifying a pair with p2.T @ F @ p1 = 0.
-
-    Use M = [e2]_x @ F + e2 @ [1, 1, 1] and fit an affine correction
-    to the transformed x-coordinates. The correction preserves y-coordinates.
-    """
+    # rectify both views and fit an x correction that preserves scanlines
     first, second = _prepare_points(points1, points2, min_points=3)
     h2 = compute_H(e2, im2)
     epipole = np.asarray(e2, dtype=np.float64)
