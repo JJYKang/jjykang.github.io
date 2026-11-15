@@ -41,7 +41,23 @@
         ],
         "allows_reflection": true,
         "point_rmse": 1.6876217644950395,
-        "relative_point_rmse": 0.14548200783411294
+        "relative_point_rmse": 0.14548200783411294,
+        "ground_truth_extent_xyz": [
+          27.184749,
+          36.152226999999996,
+          24.741384
+        ],
+        "aligned_structure_extent_xyz": [
+          25.17574293447528,
+          33.34002479457271,
+          29.845021605109416
+        ],
+        "views_elevation_azimuth": [
+          [
+            20,
+            -60
+          ]
+        ]
       }
     },
     {
@@ -54,7 +70,52 @@
         5.1285770854460395
       ],
       "coordinate_reprojection_rmse_px": 0.6044086058261399,
-      "factorization_file": "set1_subset_factorization.npz"
+      "factorization_file": "set1_subset_factorization.npz",
+      "ground_truth_comparison": {
+        "plot": "set1_subset_reconstruction_comparison.png",
+        "display_alignment": "translation, uniform scale, orthogonal orientation",
+        "scale": 0.998074430599052,
+        "orientation": [
+          [
+            0.022526540310385635,
+            -0.012407943587150305,
+            0.9996692442591109
+          ],
+          [
+            0.9997462219178078,
+            0.0004958178323080862,
+            -0.022522120809249313
+          ],
+          [
+            0.0002162006332494686,
+            -0.9999228955777615,
+            -0.012415963783408859
+          ]
+        ],
+        "allows_reflection": true,
+        "point_rmse": 1.0435716491103104,
+        "relative_point_rmse": 0.19808842616580932,
+        "ground_truth_extent_xyz": [
+          13.7,
+          0.354395,
+          10.633288
+        ],
+        "aligned_structure_extent_xyz": [
+          11.317828387251309,
+          2.5182423196875363,
+          12.237012288604271
+        ],
+        "views_elevation_azimuth": [
+          [
+            20,
+            -60
+          ],
+          [
+            0,
+            0
+          ]
+        ]
+      }
     }
   ]
 }

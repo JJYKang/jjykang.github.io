@@ -191,6 +191,13 @@ display-aligned points, and point errors; alignment parameters and RMSE are in
 `results.json`. Matplotlib uses the Agg backend; the ignored `.deps/` directory
 is a fallback for checkout-local packages and `.preview/` holds its font cache.
 
+For 3(e), `set1_subset_reconstruction_comparison.png` uses the same display
+alignment for the 18-point subset and includes oblique and edge-on views.
+The edge-on view looks along X with orthographic projection to expose the
+out-of-plane spread. Ground-truth and aligned-reconstruction coordinate ranges
+are saved in `results.json`; `set1_subset_comparison.npz` stores the compared
+points and errors. No subset comparison uses the full-set points for fitting.
+
 To preview from the repository root:
 
 ```sh

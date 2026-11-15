@@ -175,6 +175,12 @@
       <p>In the ideal affine model, W = MS, where M is 4&times;3 and S is 3&times;37, so W has rank at most three. For nondegenerate camera motion and a genuinely 3D point configuration, three singular values would be nonzero and the fourth would be zero. Centering removes translation, which could otherwise contribute an additional rank-one term.</p>
 
       <h3 id="part3e">3(e): Reconstruction from Fewer Points</h3>
+      <div class="stack-sheet img-card">
+        <a href="./media/part3/set1_subset_reconstruction_comparison.png"><img src="./media/part3/set1_subset_reconstruction_comparison.png" alt="Subset reconstruction and ground truth in oblique and edge-on views; the reconstruction has noticeably more out-of-plane spread" width="1800" height="1728" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Subset: 18 Points</div>Same display alignment as 3(c). Top: oblique view. Bottom: edge-on view along X. Corresponding points share colors, with identical axis limits within each comparison.</div>
+      </div>
+      <p>The subset preserves the rough arrangement of points, but its shape differs from the ground truth even after uniform scaling and orientation alignment. The edge-on view makes this clearer: the ground-truth points form a thin, nearly planar set, while the reconstruction spreads them out of that plane. The ground-truth Y range is 0.3544, compared with 2.5182 for the aligned reconstruction.</p>
+      <p>The issue is the subset's geometry as well as its smaller size. These points provide strong variation in two directions but very little in the third, making the out-of-plane structure poorly constrained. Correspondence errors and perspective effects can then make a substantial contribution to the third retained SVD component. The full set spans a broader 3D structure and constrains this component more strongly.</p>
 
       <h3 id="part3f">3(f): Singular-Value Comparison</h3>
     </section>
