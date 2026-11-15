@@ -3,7 +3,9 @@
 Fundamental matrix estimation, image rectification, factorization, and triangulation.
 Problem 1 is implemented in `src/fundamental.py`, with result generation in
 `scripts/part1.py`. Problem 2 uses `src/rectification.py` and `src/warping.py`, with
-Set 1 checks and image exports in `scripts/part2.py`. Remaining algorithms and result scripts will be added as
+Set 1 checks and image exports in `scripts/part2.py`. Problem 3(a) uses
+`src/factorization.py`, with full/subset result generation in `scripts/part3.py`.
+Remaining algorithms and result scripts will be added as
 each part is implemented. The supplied
 `assignment 4 code/` folder is preserved unchanged.
 
@@ -160,6 +162,23 @@ uncovered pixels. Clean images are saved as `set1_rectified_1.png` and
 `set1_rectified_2.png`; `set1_rectified_pair.png` adds six horizontal guides and
 their corresponding point markers. Canvas origins, dimensions, and guide-point
 indices are recorded in `results.json`.
+
+Generate the Problem 3(a) full-set and subset factorizations from inside `4/`:
+
+```sh
+python scripts/part3.py
+```
+
+From the portfolio root, use `python 4/scripts/part3.py`. The measurement matrix
+has rows `(x1, y1, x2, y2)`, each centered independently. The top three SVD
+components are split as `motion = U3 @ sqrt(S3)` and
+`structure = sqrt(S3) @ V3.T`. The starter-compatible return order is
+`(structure, motion)`, with shapes `3-by-N` and `4-by-3`. This is the affine
+factorization; no Euclidean metric upgrade or ground-truth alignment is applied.
+Both `.npz` outputs retain structure, motion, translations, input points, and
+all four singular values. `media/part3/results.json` records the singular values
+and reprojection RMSE per image coordinate. The script checks that the discarded
+singular value equals the Frobenius norm of the reconstruction residual.
 
 To preview from the repository root:
 

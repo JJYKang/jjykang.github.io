@@ -1,0 +1,35 @@
+{
+  "measurement_row_order": [
+    "x1",
+    "y1",
+    "x2",
+    "y2"
+  ],
+  "factorization": "centered_measurements = motion @ structure + residual",
+  "records": [
+    {
+      "dataset": "set1",
+      "correspondences": 37,
+      "singular_values": [
+        959.5852215990252,
+        540.4761317779883,
+        184.43174790779113,
+        27.915195603993517
+      ],
+      "coordinate_reprojection_rmse_px": 2.294614943863746,
+      "factorization_file": "set1_factorization.npz"
+    },
+    {
+      "dataset": "set1_subset",
+      "correspondences": 18,
+      "singular_values": [
+        264.54396507639467,
+        210.06072009274126,
+        7.219217825032016,
+        5.1285770854460395
+      ],
+      "coordinate_reprojection_rmse_px": 0.6044086058261399,
+      "factorization_file": "set1_subset_factorization.npz"
+    }
+  ]
+}
