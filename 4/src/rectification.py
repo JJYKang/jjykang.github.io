@@ -1,5 +1,6 @@
 """Epipoles and homographies for stereo image rectification."""
 import numpy as np
+from fundamental import _prepare_points
 
 
 def compute_epipole(F):
@@ -69,3 +70,43 @@ def compute_H(e, im):
     t_inverse = np.array([[1., 0, width / 2],
                           [0, 1, height / 2], [0, 0, 1]])
     return t_inverse @ g @ r @ t
+
+
+def compute_matching_homographies(e2, F, im2, points1, points2):
+    """Return H1 and H2 rectifying a pair with p2.T @ F @ p1 = 0.
+
+    Use M = [e2]_x @ F + e2 @ [1, 1, 1] and fit an affine correction
+    to the transformed x-coordinates. The correction preserves y-coordinates.
+    """
+    first, second = _prepare_points(points1, points2, min_points=3)
+    h2 = compute_H(e2, im2)
+    epipole = np.asarray(e2, dtype=np.float64)
+    epipole = epipole / np.abs(epipole).max()
+    f = np.asarray(F, dtype=np.float64)
+    if f.shape != (3, 3) or not np.isfinite(f).all() or not np.any(f):
+        raise ValueError("Provide a finite, nonzero 3-by-3 fundamental matrix")
+    f = f / np.abs(f).max()
+    f = f / np.linalg.norm(f)
+    if np.linalg.norm(f.T @ epipole) > 1e-10 * np.linalg.norm(epipole):
+        raise ValueError("The second epipole must satisfy F.T @ e2 = 0")
+
+    x, y, z = epipole
+    cross = np.array([[0, -z, y], [z, 0, -x], [-y, x, 0]])
+    m = cross @ f + np.outer(epipole, np.ones(3))
+    if np.linalg.matrix_rank(m) < 3:
+        raise ValueError("The epipole and fundamental matrix give a singular mapping")
+    base = h2 @ m
+    mapped1 = first @ base.T
+    mapped2 = second @ h2.T
+    if np.any(mapped1[:, 2] == 0) or np.any(mapped2[:, 2] == 0):
+        raise ValueError("A correspondence maps to infinity during rectification")
+    mapped1 = mapped1 / mapped1[:, 2:3]
+    mapped2 = mapped2 / mapped2[:, 2:3]
+
+    # Fit a1*x1 + a2*y1 + a3 to x2 without changing the rectified scanlines.
+    a, _, rank, _ = np.linalg.lstsq(mapped1, mapped2[:, 0], rcond=None)
+    if rank < 3 or abs(a[0]) <= np.finfo(float).eps * np.linalg.norm(a):
+        raise ValueError("Correspondences do not determine an invertible affine correction")
+    affine = np.eye(3)
+    affine[0] = a
+    return affine @ base, h2
