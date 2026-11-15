@@ -462,5 +462,48 @@
       5.072073523682189e-14
     ]
   ],
-  "canonical_matrix_error": 5.092506917967293e-14
+  "canonical_matrix_error": 5.092506917967293e-14,
+  "rectified_images": {
+    "images": [
+      {
+        "image": 1,
+        "filename": "set1_rectified_1.png",
+        "origin_xy": [
+          10,
+          -26
+        ],
+        "shape_hw": [
+          625,
+          454
+        ],
+        "valid_pixels": 175765
+      },
+      {
+        "image": 2,
+        "filename": "set1_rectified_2.png",
+        "origin_xy": [
+          14,
+          -26
+        ],
+        "shape_hw": [
+          625,
+          609
+        ],
+        "valid_pixels": 278796
+      }
+    ],
+    "pair_filename": "set1_rectified_pair.png",
+    "pair_size_wh": [
+      1075,
+      655
+    ],
+    "guide_point_indices": [
+      9,
+      27,
+      16,
+      5,
+      13,
+      20
+    ]
+  }
 }

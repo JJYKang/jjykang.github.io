@@ -139,6 +139,12 @@
       <p>Epipole-based homography construction and least-squares fitting of horizontal coordinates &mdash; <a href="./src/rectification.py">rectification.py</a></p>
 
       <h3 id="part2d">2(d): Rectified Images and Correspondence Search</h3>
+      <div class="stack-sheet img-card">
+        <a href="./media/part2/set1_rectified_pair.png"><img src="./media/part2/set1_rectified_pair.png" alt="Rectified Set 1 images with horizontal red guides through selected blue correspondence markers" width="1075" height="655" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Rectified Set 1</div>Red horizontal guides and six pairs of blue correspondence markers. Both images use the same vertical origin and pixel scale.</div>
+      </div>
+      <p>Rectification places corresponding epipolar lines on the same horizontal scanline. Matching can therefore compare rows directly and vary only the horizontal coordinate, rather than following differently oriented lines in the two images. Horizontal disparity remains because scene points have different depths.</p>
+      <p>The supplied correspondences have a mean vertical mismatch of 0.8568 pixels after rectification, so the alignment is approximate rather than exact.</p>
     </section>
 
     <section id="part3">

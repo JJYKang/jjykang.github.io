@@ -2,8 +2,8 @@
 
 Fundamental matrix estimation, image rectification, factorization, and triangulation.
 Problem 1 is implemented in `src/fundamental.py`, with result generation in
-`scripts/part1.py`. Problems 2(a-c) are implemented in `src/rectification.py`, with
-Set 1 epipole and homography checks in `scripts/part2.py`. Remaining algorithms and result scripts will be added as
+`scripts/part1.py`. Problem 2 uses `src/rectification.py` and `src/warping.py`, with
+Set 1 checks and image exports in `scripts/part2.py`. Remaining algorithms and result scripts will be added as
 each part is implemented. The supplied
 `assignment 4 code/` folder is preserved unchanged.
 
@@ -124,7 +124,7 @@ original image resolution; the plotting code clips lines at the image borders,
 including vertical lines.
 No notebook runtime is required for the static report.
 
-Generate the Problem 2(a-c) epipoles and matching homographies from inside `4/`:
+Generate the Problem 2 epipoles, homographies, and rectified images from inside `4/`:
 
 ```sh
 python scripts/part2.py
@@ -150,8 +150,16 @@ correction by least squares on the transformed x-coordinates. It returns
 The script saves `media/part2/set1_H1.npy` and `set1_H2.npy`, and records both
 homographies, transformed points, vertical disparities, and the rectified
 fundamental matrix in `results.json`. It checks that the transformed fundamental
-matrix has the canonical horizontal-scanline form. Image warping and the
-rectified image pair remain for 2(d).
+matrix has the canonical horizontal-scanline form.
+
+`src/warping.py` reuses our Assignment 3 inverse-warping implementation unchanged.
+The script applies bilinear interpolation at the original pixel scale, with
+separate horizontal canvas bounds but one shared vertical origin and height.
+This keeps matching scanlines at the same displayed y-coordinate. White marks
+uncovered pixels. Clean images are saved as `set1_rectified_1.png` and
+`set1_rectified_2.png`; `set1_rectified_pair.png` adds six horizontal guides and
+their corresponding point markers. Canvas origins, dimensions, and guide-point
+indices are recorded in `results.json`.
 
 To preview from the repository root:
 
