@@ -14,12 +14,9 @@
     <div class="author">Jerry Kang</div>
   </header>
 
-  <p>This assignment explores the geometry between multiple views of a scene, from estimating a fundamental matrix to reconstructing 3D points. The page is organized below; implementations and results will be added as each part is completed.</p>
-
   <main>
     <section id="part1">
       <h2>1: Fundamental Matrix Estimation from Point Correspondences</h2>
-      <p>Estimate the fundamental matrix from the supplied point correspondences using the linear least-squares and normalized eight-point algorithms.</p>
 
       <h3>Input Images</h3>
       <h4>Set 1</h4>
@@ -45,7 +42,10 @@
         </div>
       </div>
 
-      <h3>1(a&ndash;b): Linear Least-Squares Eight-Point Algorithm</h3>
+      <h3 id="part1a">1(a): Linear Least-Squares Eight-Point Implementation</h3>
+      <p>SVD solution with rank-two enforcement &mdash; <a href="./src/fundamental.py">fundamental.py</a></p>
+
+      <h3 id="part1b">1(b): Implementation and Fundamental Matrices</h3>
       <p>Each pair of corresponding points supplies one constraint, p<sub>2</sub><sup>T</sup>Fp<sub>1</sub> = 0. Here, p<sub>1</sub> = (x<sub>1</sub>, y<sub>1</sub>, 1)<sup>T</sup> and p<sub>2</sub> = (x<sub>2</sub>, y<sub>2</sub>, 1)<sup>T</sup> are homogeneous image coordinates. The points are used directly in pixel coordinates, without centering or rescaling.</p>
       <ol>
         <li><strong>Build the system:</strong> Expand each point-pair constraint into one row of A, with the nine entries of F arranged row by row in a vector f. Using all correspondences gives a 37&times;9 system for Set 1 and a 46&times;9 system for Set 2.</li>
@@ -56,7 +56,7 @@
       <pre><code>[x2*x1, x2*y1, x2, y2*x1, y2*y1, y2, x1, y1, 1]</code></pre>
 
       <h4>Fundamental Matrices</h4>
-      <p>F is defined only up to a nonzero scale. For consistent display, each matrix is scaled to unit Frobenius norm, with its largest-magnitude entry positive. Scientific notation preserves the small coefficients.</p>
+      <p>Each matrix has unit Frobenius norm, with its largest-magnitude entry positive. F is defined only up to a nonzero scale.</p>
       <h4>Set 1</h4>
       <pre><code>[[ 1.55218081e-06, -8.18161523e-06, -1.50440111e-03],
  [-5.86997052e-06, -3.02892219e-07, -1.13607605e-02],
@@ -66,20 +66,10 @@
  [ 2.77622828e-05,  6.74748522e-06, -1.52182033e-02],
  [-1.07623595e-02,  1.22519240e-02,  9.99730547e-01]]</code></pre>
 
-      <h3>1(c&ndash;d): Normalized Eight-Point Algorithm</h3>
-      <p>Pixel coordinates produce terms of different magnitudes in A: products such as x<sub>2</sub>x<sub>1</sub> can be much larger than individual coordinates or the constant term. Normalizing the points before fitting keeps these terms at comparable scales and improves numerical conditioning.</p>
-      <ol>
-        <li><strong>Normalize the points:</strong> For each image independently, subtract the centroid and scale the coordinates so their mean Euclidean distance from the origin is &radic;2. The transforms T<sub>1</sub> and T<sub>2</sub> record this translation and scaling.</li>
-        <li><strong>Estimate the matrix:</strong> Apply the linear eight-point algorithm from 1(a) to the normalized points. Solve with SVD and set the smallest singular value of the fitted matrix to zero to enforce rank two in the normalized coordinates.</li>
-        <li><strong>Recover pixel coordinates:</strong> Transform the matrix back using F = T<sub>2</sub><sup>T</sup>F<sub>norm</sub>T<sub>1</sub>. This follows by substituting T<sub>1</sub>p<sub>1</sub> and T<sub>2</sub>p<sub>2</sub> into the epipolar constraint.</li>
-      </ol>
-      <p>For centroid (c<sub>x</sub>, c<sub>y</sub>) and mean distance d from that centroid, the normalization transform is:</p>
-      <pre><code>s = sqrt(2) / d
-T = [[s, 0, -s*cx],
-     [0, s, -s*cy],
-     [0, 0,     1]]</code></pre>
+      <h3 id="part1c">1(c): Normalized Eight-Point Implementation</h3>
+      <p>Point centering, &radic;2 mean-distance scaling, and transformation back to pixel coordinates &mdash; <a href="./src/fundamental.py">fundamental.py</a></p>
 
-      <h4>Fundamental Matrices</h4>
+      <h3 id="part1d">1(d): Normalized Fundamental Matrices</h3>
       <p>These matrices are expressed in the original pixel coordinates and use the same unit Frobenius norm and sign convention as 1(b).</p>
       <h4>Set 1</h4>
       <pre><code>[[ 4.45505557e-06, -3.63935568e-05,  6.03119338e-04],
@@ -90,8 +80,11 @@ T = [[s, 0, -s*cx],
  [-3.20320025e-04, -2.83731330e-05, -6.19621780e-01],
  [-2.08672226e-02,  7.52241693e-01,  2.22656232e-01]]</code></pre>
 
-      <h3>1(e&ndash;f): Distance to Epipolar Lines</h3>
-      <p>To measure the fit in image coordinates, compute the perpendicular distance from each point to the epipolar line predicted by its match in the other image.</p>
+      <h3 id="part1e">1(e): Point-to-Line Distance Implementation</h3>
+      <p>Mean perpendicular distance from points to their corresponding epipolar lines &mdash; <a href="./src/fundamental.py">fundamental.py</a></p>
+      <p>Matrix estimates, distance measurements, and epipolar plots for both datasets &mdash; <a href="./scripts/part1.py">part1.py</a></p>
+
+      <h3 id="part1f">1(f): Distance Calculation and Comparison</h3>
       <ol>
         <li><strong>Find the lines:</strong> For each point p<sub>2</sub> in Image 2, compute its corresponding line in Image 1 as l<sub>1</sub> = F<sup>T</sup>p<sub>2</sub>. The three line coefficients (a, b, c) define ax + by + c = 0.</li>
         <li><strong>Measure distance:</strong> For the matching point (x, y) in Image 1, compute |ax + by + c| / &radic;(a&sup2; + b&sup2;). Dividing by the line-normal length makes the distance independent of the arbitrary scale of F.</li>
@@ -135,35 +128,34 @@ T = [[s, 0, -s*cx],
 
     <section id="part2">
       <h2>2: Matching Homographies for Image Rectification</h2>
-      <p>Use the Set 1 image pair and its normalized fundamental matrix to find two homographies that make corresponding epipolar lines horizontal.</p>
 
-      <h3>2(a): Compute the Epipoles</h3>
-      <p>Find the epipole in each image from the fundamental matrix using SVD.</p>
+      <h3 id="part2a">2(a): Compute the Epipoles</h3>
 
-      <h3>2(b&ndash;c): Rectifying Homographies</h3>
-      <p>Map the second epipole to infinity along the horizontal axis, then fit a matching homography for the first image.</p>
+      <h3 id="part2b">2(b): Map an Epipole to Infinity</h3>
 
-      <h3>2(d): Rectified Images</h3>
-      <p>The rectified pair will show how the transforms change the epipolar lines and simplify the search for corresponding points.</p>
+      <h3 id="part2c">2(c): Find Matching Homographies</h3>
+
+      <h3 id="part2d">2(d): Rectified Images and Correspondence Search</h3>
     </section>
 
     <section id="part3">
       <h2>3: The Factorization Method</h2>
-      <p>Recover 3D structure and camera motion from the Set 1 correspondences using the Tomasi&ndash;Kanade factorization method.</p>
 
-      <h3>3(a&ndash;b): Method</h3>
-      <p>Build and center the measurement matrix, then use its rank-three factorization to separate structure and motion.</p>
+      <h3 id="part3a">3(a): Factorization Implementation</h3>
 
-      <h3>3(c&ndash;d): Reconstruction and Singular Values</h3>
-      <p>Compare the reconstructed points with the supplied 3D ground truth, accounting for scale and rotation. Examine all four singular values and explain the difference between the observed rank and the ideal model.</p>
+      <h3 id="part3b">3(b): Method</h3>
 
-      <h3>3(e&ndash;f): Reconstruction from Fewer Points</h3>
-      <p>Repeat the reconstruction using the supplied subset of 18 points instead of the full 37. Compare the shape and singular values with the full-set result.</p>
+      <h3 id="part3c">3(c): Reconstruction and Ground Truth</h3>
+
+      <h3 id="part3d">3(d): Singular Values</h3>
+
+      <h3 id="part3e">3(e): Reconstruction from Fewer Points</h3>
+
+      <h3 id="part3f">3(f): Singular-Value Comparison</h3>
     </section>
 
     <section id="part4">
       <h2>4: Triangulation in Structure from Motion</h2>
-      <p>Estimate camera rotation and translation, triangulate matching points, and use the supplied structure-from-motion framework to reconstruct the statue.</p>
 
       <h3>Input Sequence</h3>
       <div class="grid-sequence">
@@ -174,20 +166,17 @@ T = [[s, 0, -s*cx],
         <div class="img-card"><img src="./assignment%204%20code/data/statue/images/B25.jpg" alt="Statue view B25" loading="lazy"><div class="img-caption"><div class="img-title">B25</div></div></div>
       </div>
 
-      <h3>4(a): Rotation and Translation Candidates</h3>
-      <p>Decompose the essential matrix into four possible camera poses and compare them with the supplied example.</p>
+      <h3 id="part4a">4(a): Rotation and Translation Candidates</h3>
 
-      <h3>4(b): Linear Triangulation</h3>
-      <p>Use the camera matrices and image correspondences to estimate a 3D point with the direct linear transform (DLT).</p>
+      <h3 id="part4b">4(b): Linear Triangulation</h3>
 
-      <h3>4(c&ndash;d): Reprojection Error and Nonlinear Refinement</h3>
-      <p>Compute the reprojection residuals and their Jacobian, then refine the linear estimate with ten Gauss-Newton updates. Use the supplied numerical checks and compare the linear and nonlinear errors.</p>
+      <h3 id="part4c">4(c): Reprojection Error and Jacobian</h3>
 
-      <h3>4(e): Select the Camera Pose</h3>
-      <p>Choose the pose for which the most triangulated points have positive depth in both camera frames.</p>
+      <h3 id="part4d">4(d): Nonlinear Triangulation</h3>
 
-      <h3>4(f): Statue Reconstruction</h3>
-      <p>Run the full pipeline to produce the statue point cloud, then discuss the challenges of reconstructing a larger scene such as a house.</p>
+      <h3 id="part4e">4(e): Select the Camera Pose</h3>
+
+      <h3 id="part4f">4(f): Statue Reconstruction and Larger Scenes</h3>
     </section>
   </main>
 

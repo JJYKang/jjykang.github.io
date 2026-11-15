@@ -63,8 +63,19 @@ the full record and `results.js` for measurements used by the webpage. Commit
 the displayed assets so GitHub Pages needs no Python runtime. Add result script
 tags only after those files exist.
 
-Use PDF numbering and keep the method, results, and discussion together. Match
-Assignment 3's white page, header, blue links, responsive image grids, and tables.
+Give every PDF subpart its own heading, including separate headings for coding
+and writing questions. For coding parts, use a short descriptive phrase about
+the implementation, followed by a link labeled with the filename. For example:
+"SVD solution with rank-two enforcement — fundamental.py". Avoid full-sentence
+introductions such as "The code builds", vague role labels, and "View code" links;
+writing parts contain the requested explanations, matrices, figures, and
+discussion. Keep shared inputs at the start of the problem. Add code links for
+unfinished parts when their implementations exist; retain only their headings
+until then. Do not add page introductions, section introductions, question
+restatements, or descriptions of future work. Keep text focused on the answers
+and the captions or conventions needed to interpret results.
+Match Assignment 3's white page, header, blue links, responsive
+image grids, and tables.
 
 ## Writing conventions
 
