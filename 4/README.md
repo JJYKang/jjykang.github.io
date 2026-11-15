@@ -5,6 +5,7 @@ Problem 1 is implemented in `src/fundamental.py`, with result generation in
 `scripts/part1.py`. Problem 2 uses `src/rectification.py` and `src/warping.py`, with
 Set 1 checks and image exports in `scripts/part2.py`. Problem 3(a) uses
 `src/factorization.py`, with full/subset result generation in `scripts/part3.py`.
+Problem 4(a) uses `src/triangulation.py`, with pose checks in `scripts/part4.py`.
 Remaining algorithms and result scripts will be added as
 each part is implemented. The supplied
 `assignment 4 code/` folder is preserved unchanged.
@@ -197,6 +198,23 @@ The edge-on view looks along X with orthographic projection to expose the
 out-of-plane spread. Ground-truth and aligned-reconstruction coordinate ranges
 are saved in `results.json`; `set1_subset_comparison.npz` stores the compared
 points and errors. No subset comparison uses the full-set points for fitting.
+
+Generate the Problem 4(a) pose candidates from inside `4/`:
+
+```sh
+python scripts/part4.py
+```
+
+From the portfolio root, use `python 4/scripts/part4.py`. The script forms
+`E = K.T @ F @ K` for all four adjacent statue-image pairs, using focal length
+719.5459 and zero principal point, matching the supplied centered coordinates.
+`estimate_initial_RT(E)` returns four `[R | t]` candidates in a `4-by-3-by-4`
+array: two proper rotations from `U @ W @ V.T` and `U @ W.T @ V.T`, each with
+both signs of the third column of U as unit translation. Poses follow
+`X2 = R @ X1 + t`. No physical pose is selected until the positive-depth test
+in 4(e). Saved `.npy` arrays and `media/part4/results.json` include all candidates;
+the script checks rotation orthogonality, determinant +1, translation lengths,
+and agreement with the supplied first-pair example to its four-decimal precision.
 
 To preview from the repository root:
 
