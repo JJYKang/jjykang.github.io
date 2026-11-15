@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SYDE 671 Assignment 4 &mdash; Jerry Kang</title>
   <link rel="stylesheet" href="./style.css">
+  <script>
+    window.MathJax = {tex: {inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']]}};
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 </head>
 <body>
   <header>
@@ -46,17 +50,17 @@
       <p>SVD solution with rank-two enforcement &mdash; <a href="./src/fundamental.py">fundamental.py</a></p>
 
       <h3 id="part1b">1(b): Implementation and Fundamental Matrices</h3>
-      <p>Each pair of corresponding points supplies one constraint, p<sub>2</sub><sup>T</sup>Fp<sub>1</sub> = 0. Here, p<sub>1</sub> = (x<sub>1</sub>, y<sub>1</sub>, 1)<sup>T</sup> and p<sub>2</sub> = (x<sub>2</sub>, y<sub>2</sub>, 1)<sup>T</sup> are homogeneous image coordinates. The points are used directly in pixel coordinates, without centering or rescaling.</p>
+      <p>Each matching pair satisfies p<sub>2</sub><sup>T</sup>Fp<sub>1</sub> = 0, where p<sub>1</sub> and p<sub>2</sub> contain the two image coordinates with a final coordinate of 1. The coordinates are used directly in pixels, without centering or rescaling.</p>
       <ol>
-        <li><strong>Build the system:</strong> Expand each point-pair constraint into one row of A, with the nine entries of F arranged row by row in a vector f. Using all correspondences gives a 37&times;9 system for Set 1 and a 46&times;9 system for Set 2.</li>
-        <li><strong>Solve:</strong> Compute the SVD of A and take the last right singular vector. This minimizes the algebraic residual ||Af|| subject to ||f|| = 1. Reshape the vector into a 3&times;3 matrix.</li>
-        <li><strong>Enforce rank two:</strong> Compute the SVD of the fitted matrix, set its smallest singular value to zero, and reconstruct F. This gives the closest rank-two matrix in Frobenius norm.</li>
+        <li><strong>Build the system:</strong> Expand each matching pair into one row of A, with the nine entries of F stored row by row in a vector f. Stacking all pairs gives a 37&times;9 system for Set 1 and a 46&times;9 system for Set 2.</li>
+        <li><strong>Solve:</strong> Compute the SVD of A with <code>np.linalg.svd</code> and take the last row of V<sup>T</sup>, corresponding to the smallest singular value. This gives a unit-length vector f that makes Af as close to zero as possible. Reshape it into a 3&times;3 matrix.</li>
+        <li><strong>Enforce rank two:</strong> Compute the SVD of the fitted matrix, set its smallest singular value to zero, and reconstruct F. This enforces the fundamental matrix's rank-two constraint while changing the fitted matrix as little as possible in squared entry error.</li>
       </ol>
       <p>For each correspondence, the row of A is:</p>
       <pre><code>[x2*x1, x2*y1, x2, y2*x1, y2*y1, y2, x1, y1, 1]</code></pre>
 
       <h4>Fundamental Matrices</h4>
-      <p>Each matrix has unit Frobenius norm, with its largest-magnitude entry positive. F is defined only up to a nonzero scale.</p>
+      <p>F is defined only up to a nonzero scale. Each matrix below is scaled so the sum of its squared entries is one, with its largest-magnitude entry positive.</p>
       <h4>Set 1</h4>
       <pre><code>[[ 1.55218081e-06, -8.18161523e-06, -1.50440111e-03],
  [-5.86997052e-06, -3.02892219e-07, -1.13607605e-02],
@@ -70,7 +74,7 @@
       <p>Point centering, &radic;2 mean-distance scaling, and transformation back to pixel coordinates &mdash; <a href="./src/fundamental.py">fundamental.py</a></p>
 
       <h3 id="part1d">1(d): Normalized Fundamental Matrices</h3>
-      <p>These matrices are expressed in the original pixel coordinates and use the same unit Frobenius norm and sign convention as 1(b).</p>
+      <p>The normalized estimates are transformed back to pixel coordinates using F = T<sub>2</sub><sup>T</sup>F<sub>norm</sub>T<sub>1</sub>. Here, T<sub>1</sub> and T<sub>2</sub> center each point set and scale its mean distance from the origin to &radic;2. The displayed matrices use the same scale and sign convention as 1(b).</p>
       <h4>Set 1</h4>
       <pre><code>[[ 4.45505557e-06, -3.63935568e-05,  6.03119338e-04],
  [-3.35055836e-05, -2.32218046e-06, -4.39148773e-02],
@@ -86,10 +90,14 @@
 
       <h3 id="part1f">1(f): Distance Calculation and Comparison</h3>
       <ol>
-        <li><strong>Find the lines:</strong> For each point p<sub>2</sub> in Image 2, compute its corresponding line in Image 1 as l<sub>1</sub> = F<sup>T</sup>p<sub>2</sub>. The three line coefficients (a, b, c) define ax + by + c = 0.</li>
-        <li><strong>Measure distance:</strong> For the matching point (x, y) in Image 1, compute |ax + by + c| / &radic;(a&sup2; + b&sup2;). Dividing by the line-normal length makes the distance independent of the arbitrary scale of F.</li>
-        <li><strong>Average:</strong> Take the arithmetic mean over all correspondences. To measure Image 2, swap the point sets and use F<sup>T</sup> in the same function, which forms the lines l<sub>2</sub> = Fp<sub>1</sub>.</li>
+        <li><strong>Find the lines:</strong> For each point p<sub>2</sub> in Image 2, compute its corresponding line in Image 1 as l<sub>1</sub> = F<sup>T</sup>p<sub>2</sub>. Its coefficients (a, b, c) define the line ax + by + c = 0.</li>
+        <li><strong>Measure distance:</strong> Substitute the matching Image 1 point (x, y) into the distance formula below. The absolute value keeps the distance nonnegative, and dividing by the length of the line's normal vector removes the arbitrary scale of the line coefficients.</li>
+        <li><strong>Average:</strong> Take the mean over all matching pairs. For Image 2, swap the point sets and transpose F in the same function, giving lines l<sub>2</sub> = Fp<sub>1</sub>.</li>
       </ol>
+      <div class="table-scroll">\[
+        d = \frac{|ax+by+c|}{\sqrt{a^2+b^2}},\qquad
+        \text{mean distance} = \frac{1}{N}\sum_{i=1}^{N}d_i.
+      \]</div>
 
       <h4>Mean Distance to Epipolar Lines</h4>
       <div class="table-scroll"><table>
@@ -101,7 +109,7 @@
           <tr><th scope="row">Set 2</th><td>Normalized</td><td>0.8895</td><td>0.8917</td></tr>
         </tbody>
       </table></div>
-      <p>Normalization reduces the mean distance below one pixel in both images of both sets. The unnormalized fit has much larger errors, especially for Set 1. Its objective minimizes an algebraic residual rather than pixel distance, and the differently scaled terms in A make the fit sensitive to the coordinate magnitudes. Normalization improves the conditioning before fitting and enforcing rank two.</p>
+      <p>The normalized method gives mean distances below one pixel in all four images. The unnormalized estimates are much worse, with distances ranging from 9.7014 to 28.0257 pixels. Products of pixel coordinates can be much larger than the other terms in A, making the equations poorly balanced. Centering and scaling the points reduces this imbalance before solving for F.</p>
 
       <h4>Set 1: Epipolar Lines</h4>
       <p>Red lines are predicted from points in the other image; blue markers show the measured points. Each panel retains the original 512&times;512 image coordinates.</p>
@@ -123,7 +131,7 @@
         <a href="./media/part1/set2_normalized_epipolar.png"><img src="./media/part1/set2_normalized_epipolar.png" alt="Set 2 normalized estimate: epipolar lines pass close to the measured points" width="1036" height="542" loading="lazy"></a>
         <div class="img-caption"><div class="img-title">Normalized Eight-Point Algorithm</div></div>
       </div>
-      <p>In both sets, the normalized lines follow the point locations more closely, matching the lower distances in the table. These are fitting errors on the supplied correspondences, rather than errors on a separate test set.</p>
+      <p>The unnormalized lines miss several points around the roof and base. After normalization, the lines pass much closer to the blue markers in both sets, consistent with the table. The distances measure the supplied points used to fit F; they do not measure accuracy on new correspondences.</p>
     </section>
 
     <section id="part2">
@@ -143,8 +151,8 @@
         <a href="./media/part2/set1_rectified_pair.png"><img src="./media/part2/set1_rectified_pair.png" alt="Rectified Set 1 images with horizontal red guides through selected blue correspondence markers" width="1075" height="655" loading="lazy"></a>
         <div class="img-caption"><div class="img-title">Rectified Set 1</div>Red horizontal guides and six pairs of blue correspondence markers. Both images use the same vertical origin and pixel scale.</div>
       </div>
-      <p>Rectification places corresponding epipolar lines on the same horizontal scanline. Matching can therefore compare rows directly and vary only the horizontal coordinate, rather than following differently oriented lines in the two images. Horizontal disparity remains because scene points have different depths.</p>
-      <p>The supplied correspondences have a mean vertical mismatch of 0.8568 pixels after rectification, so the alignment is approximate rather than exact.</p>
+      <p>The blue points now lie close to the same horizontal guides in both images. Rectification makes corresponding epipolar lines horizontal and places them at the same row, so matching varies only the x-coordinate. This allows direct row comparisons instead of following sloped lines with different orientations in the two images.</p>
+      <p>The points can still differ horizontally because of scene depth. Their mean vertical mismatch is 0.8568 pixels, so a narrow tolerance around the matching row is still useful for these estimated transforms.</p>
     </section>
 
     <section id="part3">
@@ -155,32 +163,36 @@
 
       <h3 id="part3b">3(b): Method</h3>
       <ol>
-        <li><strong>Build the measurement matrix:</strong> Stack the matching image coordinates into a 4&times;N matrix W, with rows ordered as x<sub>1</sub>, y<sub>1</sub>, x<sub>2</sub>, y<sub>2</sub>. Subtract each row's mean to remove the image translation.</li>
-        <li><strong>Keep three components:</strong> Compute W = U&Sigma;V<sup>T</sup> using SVD and retain the three largest singular values and their corresponding singular vectors. This gives the best rank-three approximation to the centered measurements in Frobenius norm.</li>
-        <li><strong>Separate motion and structure:</strong> Split the retained singular values between M = U<sub>3</sub>&Sigma;<sub>3</sub><sup>1/2</sup> and S = &Sigma;<sub>3</sub><sup>1/2</sup>V<sub>3</sub><sup>T</sup>. M is the 4&times;3 motion matrix, and each column of the 3&times;N structure matrix S gives one reconstructed point.</li>
+        <li><strong>Center the measurements:</strong> Stack the coordinates into W with rows x<sub>1</sub>, y<sub>1</sub>, x<sub>2</sub>, y<sub>2</sub>, giving a 4&times;N matrix. Subtract each row's mean so both sets of image points are centered at the origin. Save those means to restore the image translations later.</li>
+        <li><strong>Keep three components:</strong> Compute the SVD, W = U&Sigma;V<sup>T</sup>. Keep the three largest singular values and the matching columns of U and rows of V<sup>T</sup>. This removes the fourth component and gives the rank-three approximation with the smallest sum of squared entry errors.</li>
+        <li><strong>Separate motion and structure:</strong> Multiply each retained column of U by the square root of its singular value to form M. Multiply each retained row of V<sup>T</sup> by the same square root to form S. M is 4&times;3, with two rows per camera. S is 3&times;N, with one reconstructed 3D point per column.</li>
       </ol>
-      <p>The product MS approximates the centered image coordinates; adding the saved row means restores the original image translations. The factors describe an affine reconstruction, with no metric upgrade applied.</p>
+      <p>Multiplying M and S recovers the centered image coordinates approximately. Adding the saved row means places them back in the original images.</p>
 
       <h3 id="part3c">3(c): Reconstruction and Ground Truth</h3>
       <div class="stack-sheet img-card">
         <a href="./media/part3/set1_reconstruction_comparison.png"><img src="./media/part3/set1_reconstruction_comparison.png" alt="Full-set factorization and ground truth on matching 3D axes, showing similar point arrangements with residual shape differences" width="1800" height="864" loading="lazy"></a>
-        <div class="img-caption"><div class="img-title">Full Set: 37 Points</div>Reconstruction centered, uniformly scaled, and orthogonally aligned for comparison, allowing reflection for the arbitrary SVD axis signs. Matching colors identify corresponding points; both plots use the same axis limits and viewing angle.</div>
+        <div class="img-caption"><div class="img-title">Full Set: 37 Points</div>Matching colors identify corresponding points. Both plots use the same axis limits and viewing angle.</div>
       </div>
-      <p>The reconstruction recovers the overall point arrangement, although some relative dimensions and point positions differ. After the display alignment, the 3D point RMSE is 1.6876 in the ground-truth coordinate units.</p>
-      <p>Scale and orientation are not fixed by the factorization: a rotation or scaling of S can be absorbed into M without changing their product. More generally, MS = (MA)(A<sup>&minus;1</sup>S) for any invertible A. Our implementation stops at this affine factorization, so its ambiguity also includes shear and unequal axis scaling. The clouds therefore need not be identical after only rotation and uniform scaling. The remaining differences also reflect the affine approximation to perspective images and errors in the measured correspondences.</p>
+      <p>The two clouds have a similar overall shape, including the central rows of points and the points above them. Some spacings and upper point positions differ. For this comparison, the reconstruction was centered and fitted to the ground truth using one uniform scale and a rotation or reflection. Reflection accounts for the arbitrary signs of the SVD axes; individual axes were not stretched to improve the fit. The resulting 3D point RMSE is 1.6876 in ground-truth units.</p>
+      <p>Scale and orientation are ambiguous because changing the structure can be compensated for by changing the motion matrix. Their product, and therefore the image measurements, stays the same:</p>
+      <div class="table-scroll">\[
+        MS=(MA)(A^{-1}S).
+      \]</div>
+      <p>For this affine method, A can be any invertible 3&times;3 matrix, including a shear or a different scale along each axis. This is the ambiguity described in <a href="https://web.stanford.edu/class/cs231a/course_notes/04-stereo-systems.pdf#page=10">Course Notes 4, Sections 3.2&ndash;3.3</a>. The reconstruction therefore need not match exactly after only rotation and uniform scaling. Perspective effects and errors in the measured points also contribute to the remaining differences.</p>
 
       <h3 id="part3d">3(d): Singular Values</h3>
       <pre><code>[959.5852, 540.4761, 184.4317, 27.9152]</code></pre>
-      <p>The centered 4&times;37 measurement matrix has four nonzero singular values because the observations do not satisfy an exact rank-three affine model. Perspective effects and correspondence errors introduce a fourth component. Its singular value, 27.9152, is smaller than the first three but remains nonzero.</p>
-      <p>In the ideal affine model, W = MS, where M is 4&times;3 and S is 3&times;37, so W has rank at most three. For nondegenerate camera motion and a genuinely 3D point configuration, three singular values would be nonzero and the fourth would be zero. Centering removes translation, which could otherwise contribute an additional rank-one term.</p>
+      <p>W has four rows, so it can have four nonzero singular values. Here, perspective effects and correspondence errors prevent the measured coordinates from fitting an exact rank-three affine model. They leave a fourth singular value of 27.9152, which is smaller than the first three but not zero.</p>
+      <p>In the ideal model, W = MS, with M of size 4&times;3 and S of size 3&times;37, so the product has rank at most three. When the points span three dimensions and the views constrain them, three singular values are nonzero and the fourth is zero. Centering is important: it removes image translation, which could otherwise add another rank-one term.</p>
 
       <h3 id="part3e">3(e): Reconstruction from Fewer Points</h3>
       <div class="stack-sheet img-card">
         <a href="./media/part3/set1_subset_reconstruction_comparison.png"><img src="./media/part3/set1_subset_reconstruction_comparison.png" alt="Subset reconstruction and ground truth in oblique and edge-on views; the reconstruction has noticeably more out-of-plane spread" width="1800" height="1728" loading="lazy"></a>
-        <div class="img-caption"><div class="img-title">Subset: 18 Points</div>Same display alignment as 3(c). Top: oblique view. Bottom: edge-on view along X. Corresponding points share colors, with identical axis limits within each comparison.</div>
+        <div class="img-caption"><div class="img-title">Subset: 18 Points</div>Top: oblique view. Bottom: edge-on view along X. Same alignment procedure as 3(c), with matching colors and axis limits.</div>
       </div>
-      <p>The subset preserves the rough arrangement of points, but its shape differs from the ground truth even after uniform scaling and orientation alignment. The edge-on view makes this clearer: the ground-truth points form a thin, nearly planar set, while the reconstruction spreads them out of that plane. The ground-truth Y range is 0.3544, compared with 2.5182 for the aligned reconstruction.</p>
-      <p>The issue is the subset's geometry as well as its smaller size. These points provide strong variation in two directions but very little in the third, making the out-of-plane structure poorly constrained. Correspondence errors and perspective effects can then make a substantial contribution to the third retained SVD component. The full set spans a broader 3D structure and constrains this component more strongly.</p>
+      <p>The oblique view still shows the rough arrangement of points, but the edge-on view exposes the shape error. The ground-truth points lie close to a plane, while the reconstruction gives that plane noticeable thickness. The Y range increases from 0.3544 in the ground truth to 2.5182 in the aligned reconstruction.</p>
+      <p>The subset's geometry matters as well as its smaller size. These 18 points vary mainly along two directions, with very little variation perpendicular to their plane. That makes the third dimension hard to estimate. The algorithm still retains three SVD components, so errors in the correspondences and the affine approximation can be mistaken for depth. The full set spans more of the 3D scene and constrains this direction more strongly.</p>
 
       <h3 id="part3f">3(f): Singular-Value Comparison</h3>
       <div class="table-scroll"><table>
@@ -190,8 +202,8 @@
           <tr><th scope="row">Subset (18 points)</th><td>264.5440</td><td>210.0607</td><td>7.2192</td><td>5.1286</td></tr>
         </tbody>
       </table></div>
-      <p>All four singular values decrease because the subset contains fewer points and covers a smaller spatial extent. The largest relative change is in the third component: &sigma;<sub>3</sub> falls from 184.4317 to 7.2192, while &sigma;<sub>3</sub>/&sigma;<sub>2</sub> drops from 0.3412 to 0.0344. This agrees with the nearly planar subset, whose measurements are dominated by two directions of variation.</p>
-      <p>The third and fourth singular values are also much closer: &sigma;<sub>3</sub>/&sigma;<sub>4</sub> falls from 6.6069 to 1.4076. The third component retained for reconstruction is therefore less clearly separated from the component discarded as affine-model residual. It is more sensitive to measurement errors and perspective effects, explaining the unreliable out-of-plane structure in 3(e).</p>
+      <p>All four values decrease with the smaller set of points and its smaller spatial extent. The largest relative drop is in the third value, from 184.4317 to 7.2192. Relative to the second value, &sigma;<sub>3</sub>/&sigma;<sub>2</sub> falls from 0.3412 to 0.0344. Most of the subset's variation is therefore concentrated in its first two components, consistent with the nearly planar ground truth.</p>
+      <p>The gap between the third and fourth values also shrinks: &sigma;<sub>3</sub>/&sigma;<sub>4</sub> falls from 6.6069 to 1.4076. The third component is now only slightly larger than the fourth component that the algorithm discards. This makes weak depth variation harder to separate from measurement errors and perspective effects, explaining the extra thickness visible in 3(e).</p>
     </section>
 
     <section id="part4">
@@ -210,7 +222,7 @@
       <p>SVD decomposition into two rotations and opposite translation directions &mdash; <a href="./src/triangulation.py">triangulation.py</a></p>
 
       <h3 id="part4b">4(b): Linear Triangulation</h3>
-      <p>DLT constraint stacking and homogeneous SVD solution for a 3D point &mdash; <a href="./src/triangulation.py">triangulation.py</a></p>
+      <p>Stacked camera constraints and an SVD solution for each 3D point &mdash; <a href="./src/triangulation.py">triangulation.py</a></p>
 
       <h3 id="part4c">4(c): Reprojection Error and Jacobian</h3>
       <p>Projected-minus-observed residuals and analytic quotient-rule derivatives &mdash; <a href="./src/triangulation.py">triangulation.py</a></p>
@@ -224,10 +236,10 @@
       <h3 id="part4f">4(f): Statue Reconstruction and Larger Scenes</h3>
       <div class="stack-sheet img-card">
         <a href="./media/part4/statue_reconstruction.png"><img src="./media/part4/statue_reconstruction.png" alt="Reconstructed statue point cloud, colored by depth, showing the partial head and pedestal with gaps and background points" width="1440" height="1440" loading="lazy"></a>
-        <div class="img-caption"><div class="img-title">Statue Reconstruction</div>Five views and all four adjacent image pairs; 174,853 points retained after depth and reprojection checks. Color indicates depth. The view is cropped around the bust; coordinate scale is relative to a unit camera baseline.</div>
+        <div class="img-caption"><div class="img-title">Statue Reconstruction</div>174,853 retained points from five views and four adjacent pairs. Color shows depth. Cropped view; the distance between the first two camera positions defines one coordinate unit.</div>
       </div>
-      <p>A house requires more viewpoints to cover its larger extent, with occlusions hiding different surfaces from each position. Blank walls provide few distinctive features, while repeated windows and bricks can produce ambiguous matches. Changing illumination, reflections, and moving objects also make correspondence less reliable than for a small, stationary statue.</p>
-      <p>A longer image sequence introduces more camera poses and point tracks, increasing memory use and the cost of bundle adjustment. Pose errors can accumulate into drift, so overlapping views throughout the scene and revisiting previously seen areas become important for maintaining a consistent reconstruction. Distant surfaces also need larger camera baselines to obtain reliable depth.</p>
+      <p>A house needs more viewpoints to cover its larger extent, and surfaces hidden from one position may only become visible from another. Blank walls provide few distinctive features, while repeated windows and bricks can match the wrong part of the building. Changes in lighting, reflections, and moving objects also make matching less reliable than for the small, stationary statue.</p>
+      <p>More images mean more camera positions and 3D points to optimize together in bundle adjustment, increasing memory use and computation. Small camera-position and orientation errors can also accumulate along the sequence, causing drift. Overlapping views and revisiting earlier areas help connect the reconstruction. For distant surfaces, small camera movements shift points by very few pixels, so larger separations are needed for reliable depth; these can reduce overlap and make matching harder.</p>
     </section>
   </main>
 

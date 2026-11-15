@@ -274,6 +274,11 @@ def bundle_adjustment(frame):
     vec = least_squares(reprojection_error_mot_str_opt, np.hstack((motion_angle_axis.flatten(), frame.structure.flatten())),
         args=(frame.match_idx, frame.match_points, frame.focal_length, px, py), method='lm')
 
+    if not vec.success or not np.isfinite(vec.x).all() or not np.isfinite(vec.fun).all():
+        raise RuntimeError(f"Bundle adjustment failed: {vec.message}")
+    if np.linalg.norm(vec.fun) > np.linalg.norm(errors) + 1e-8:
+        raise RuntimeError("Bundle adjustment increased the reprojection residual")
+
     cut = 3 * 2 * num_cameras
 
     opt_val = vec['x']

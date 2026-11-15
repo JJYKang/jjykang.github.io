@@ -63,11 +63,11 @@
       7.0
     ]
   ],
+  "plotted_point_count": 174341,
+  "plot_color": "depth Z",
   "plot_elevation_azimuth": [
     -100,
     90
   ],
-  "seconds": 29.869684899997083,
-  "plotted_point_count": 174341,
-  "plot_color": "depth Z"
+  "seconds": 20.965508299996145
 }

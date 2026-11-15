@@ -15,6 +15,7 @@ and the adapted supplied framework in `src/sfm_utils.py`. The supplied
   index.html                 # report, organized by PDF problem and subpart
   style.css                  # Assignment 3 styling
   requirements.txt
+  p1.py ... p4.py             # completed function APIs and executable entry points
   syde671 Assignment 4.pdf
   assignment 4 code/         # original starter code, notebook, helpers, and data
   src/                       # reusable algorithms
@@ -26,9 +27,9 @@ and the adapted supplied framework in `src/sfm_utils.py`. The supplied
     part4/                   # triangulation checks and reconstructed statue
 ```
 
-## Planned implementation
+## Implementation layout
 
-These files will be added when implementing the corresponding section:
+Each problem uses the following modules and result scripts:
 
 | Problem | Reusable code | Result script | Inputs | Outputs |
 | --- | --- | --- | --- | --- |
@@ -46,8 +47,12 @@ Scripts will resolve paths from `Path(__file__).resolve().parents[1]` so they
 work from `4/` or the portfolio root. Read original inputs from
 `ROOT / "assignment 4 code" / "data"`; do not duplicate or rename the data.
 Preserve starter function names and argument conventions in our algorithms.
-If completed starter files are needed for submission, prepare adapters after
-implementation rather than maintaining a second algorithm implementation.
+The root-level `p1.py` through `p4.py` expose every required function under the
+PDF's filenames and run the corresponding result scripts when executed.
+`python p4.py` runs both the numerical checks and the full reconstruction.
+These thin adapters depend on `src/` and the result scripts; include those
+directories when sharing the code. The original starter folder and notebook
+remain reference copies with their original stubs.
 
 The supplied loader reads 2D text rows as `(y, x)` and returns homogeneous
 `(x, y, 1)` points. The fundamental-matrix convention is `p2.T @ F @ p1 = 0`
@@ -84,6 +89,14 @@ image grids, and tables.
 ## Writing conventions
 
 - Introduce the concrete input and what the method computes.
+- Match the previous reports' pattern: numbered actions for requested algorithm
+  explanations, followed by measured or visible results and the reason for them.
+- Explain what technical terms mean through the operation being performed:
+  for example, describe the smallest sum of squared entry errors when discussing
+  the Frobenius-norm approximation. Incorporate supporting notation cleanly into
+  the prose using ordinary text and subscripts/superscripts. Reserve displayed
+  equations for formulas that receive a full explanation and are the focus of
+  the discussion. Use code blocks for numeric output or small implementation snippets.
 - Explain algorithms in short numbered steps with a bold action, followed by
   what it does and why. Include equations when they clarify the step.
 - State actual dimensions, parameters, normalization, and coordinate conventions.
@@ -91,6 +104,7 @@ image grids, and tables.
 - Describe visible results in plain sentences, then explain their cause or limits.
 - Separate expected properties from observations. Write comparisons after checking outputs.
 - Keep captions brief: identify the image or method and the detail to compare.
+- Put detailed comparison conventions in the answer text rather than long captions.
 
 ## Setup and preview
 
@@ -288,7 +302,30 @@ per-pair counts, errors, coordinate conventions, and the plot crop.
 the complete retained cloud remains in the saved arrays. Regenerate just the
 figure with `python scripts/part4_reconstruction.py --plot-only`.
 
-To preview from the repository root:
+## Verification
+
+From the portfolio root:
+
+```sh
+python -m unittest discover -s 4/tests -v
+```
+
+The 17 tests cover known synthetic geometry, coordinate normalization and
+conventions, exact-eight-point systems, epipoles at infinity, rectification,
+interpolation, affine rank-three fitting, pose ambiguity and positive depth,
+DLT, analytic derivatives, exactly ten Gauss-Newton steps, and batch/scalar
+triangulation agreement. Report checks cover all 22 subparts, local links and
+image dimensions, displayed numbers, required function APIs, and the saved
+five-camera/four-pair reconstruction. Reproduce all outputs with `python 4/p1.py`
+through `python 4/p4.py` after installing `requirements.txt`.
+
+The 3(c) discussion distinguishes the handout's scale/rotation description from
+the general affine ambiguity explicitly described in the originating Stanford
+[Course Notes 4, Sections 3.2-3.3](https://web.stanford.edu/class/cs231a/course_notes/04-stereo-systems.pdf#page=10).
+No ground-truth metric fit is added to the reconstruction. The approximate 4(b)
+reference-point discrepancy is recorded above rather than hidden by rounding.
+
+## Local preview
 
 ```sh
 python -m http.server 8000
