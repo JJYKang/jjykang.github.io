@@ -154,6 +154,12 @@
       <p>Measurement centering and rank-three SVD factorization into structure and motion &mdash; <a href="./src/factorization.py">factorization.py</a></p>
 
       <h3 id="part3b">3(b): Method</h3>
+      <ol>
+        <li><strong>Build the measurement matrix:</strong> Stack the matching image coordinates into a 4&times;N matrix W, with rows ordered as x<sub>1</sub>, y<sub>1</sub>, x<sub>2</sub>, y<sub>2</sub>. Subtract each row's mean to remove the image translation.</li>
+        <li><strong>Keep three components:</strong> Compute W = U&Sigma;V<sup>T</sup> using SVD and retain the three largest singular values and their corresponding singular vectors. This gives the best rank-three approximation to the centered measurements in Frobenius norm.</li>
+        <li><strong>Separate motion and structure:</strong> Split the retained singular values between M = U<sub>3</sub>&Sigma;<sub>3</sub><sup>1/2</sup> and S = &Sigma;<sub>3</sub><sup>1/2</sup>V<sub>3</sub><sup>T</sup>. M is the 4&times;3 motion matrix, and each column of the 3&times;N structure matrix S gives one reconstructed point.</li>
+      </ol>
+      <p>The product MS approximates the centered image coordinates; adding the saved row means restores the original image translations. The factors describe an affine reconstruction, with no metric upgrade applied.</p>
 
       <h3 id="part3c">3(c): Reconstruction and Ground Truth</h3>
 
