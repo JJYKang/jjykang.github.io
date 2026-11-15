@@ -117,3 +117,46 @@ def nonlinear_estimate_3d_point(image_points, camera_matrices):
             raise ValueError("Gauss-Newton produced a nonfinite 3D point")
     _project_point(point, camera_matrices)
     return point
+
+
+def _pose_depth_counts(candidates, image_points, K):
+    """Count positive depths in both camera frames, excluding failed triangulations."""
+    observations = np.asarray(image_points, dtype=np.float64)
+    k = np.asarray(K, dtype=np.float64)
+    if (observations.ndim != 3 or observations.shape[1:] != (2, 2)
+            or len(observations) == 0 or not np.isfinite(observations).all()):
+        raise ValueError("Provide finite N-by-2-by-2 correspondences, N >= 1")
+    if (k.shape != (3, 3) or not np.isfinite(k).all()
+            or np.linalg.matrix_rank(k) < 3):
+        raise ValueError("Provide a finite, invertible 3-by-3 intrinsic matrix")
+    first_camera = k @ np.column_stack((np.eye(3), np.zeros(3)))
+    counts = np.zeros(len(candidates), dtype=int)
+    failures = np.zeros(len(candidates), dtype=int)
+    for index, pose in enumerate(candidates):
+        cameras = np.stack((first_camera, k @ pose))
+        for matches in observations:
+            try:
+                point = nonlinear_estimate_3d_point(matches, cameras)
+            except (ValueError, np.linalg.LinAlgError):
+                failures[index] += 1
+                continue
+            second_point = pose[:, :3] @ point + pose[:, 3]
+            if point[2] > 0 and second_point[2] > 0:
+                counts[index] += 1
+    return counts, failures
+
+
+def estimate_RT_from_E(E, image_points, K):
+    """Return the 3-by-4 pose with the most triangulated points in front of both cameras.
+
+    image_points has shape (N, 2, 2), with one (x, y) observation per camera.
+    K is the shared intrinsic matrix; X2 = R @ X1 + t, with unit translation.
+    Failed triangulations receive no vote. Tied maxima use the first candidate;
+    if no point has positive depth in both cameras, the pose is rejected.
+    """
+    candidates = estimate_initial_RT(E)
+    counts, _ = _pose_depth_counts(candidates, image_points, K)
+    best = int(np.argmax(counts))
+    if counts[best] == 0:
+        raise ValueError("No candidate has triangulated points in front of both cameras")
+    return candidates[best].copy()

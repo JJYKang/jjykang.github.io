@@ -5,7 +5,7 @@ Problem 1 is implemented in `src/fundamental.py`, with result generation in
 `scripts/part1.py`. Problem 2 uses `src/rectification.py` and `src/warping.py`, with
 Set 1 checks and image exports in `scripts/part2.py`. Problem 3(a) uses
 `src/factorization.py`, with full/subset result generation in `scripts/part3.py`.
-Problems 4(a-d) use `src/triangulation.py`, with pose, triangulation, and derivative checks
+Problems 4(a-e) use `src/triangulation.py`, with pose, triangulation, and derivative checks
 in `scripts/part4.py`.
 Remaining algorithms and result scripts will be added as
 each part is implemented. The supplied
@@ -200,7 +200,7 @@ out-of-plane spread. Ground-truth and aligned-reconstruction coordinate ranges
 are saved in `results.json`; `set1_subset_comparison.npz` stores the compared
 points and errors. No subset comparison uses the full-set points for fitting.
 
-Generate the Problem 4(a-d) pose, triangulation, and reprojection checks from inside `4/`:
+Generate the Problem 4(a-e) pose, triangulation, and reprojection checks from inside `4/`:
 
 ```sh
 python scripts/part4.py
@@ -212,8 +212,8 @@ From the portfolio root, use `python 4/scripts/part4.py`. The script forms
 `estimate_initial_RT(E)` returns four `[R | t]` candidates in a `4-by-3-by-4`
 array: two proper rotations from `U @ W @ V.T` and `U @ W.T @ V.T`, each with
 both signs of the third column of U as unit translation. Poses follow
-`X2 = R @ X1 + t`. No physical pose is selected until the positive-depth test
-in 4(e). Saved `.npy` arrays and `media/part4/results.json` include all candidates;
+`X2 = R @ X1 + t`. The positive-depth test in 4(e) selects the physical pose.
+Saved `.npy` arrays and `media/part4/results.json` include all candidates;
 the script checks rotation orthogonality, determinant +1, translation lengths,
 and agreement with the supplied first-pair example to its four-decimal precision.
 
@@ -224,7 +224,7 @@ singular vector, and divides by its fourth homogeneous coordinate. It rejects
 underconstrained geometry, points at infinity, and undefined projections.
 The script reproduces the starter's first-match test with the rounded example
 pose, saving inputs and the estimated point in `linear_triangulation_check.npz`
-and its errors in `results.json`. It does not select a pose by depth yet.
+and its errors in `results.json`.
 For the supplied rounded camera pose and first match, homogeneous DLT returns
 approximately `(0.676717, -1.102419, 4.660340)`. The starter's reference is
 `(0.6774, -1.1029, 4.6621)`, with summed absolute difference about 0.002924;
@@ -250,6 +250,15 @@ nonfinite estimates are rejected. As specified, no damping or convergence
 guarantee is added. The script checks improvement on the supplied four-view
 test and saves both points, residuals, and the final gradient in
 `nonlinear_triangulation_check.npz`, with summary values in `results.json`.
+
+`estimate_RT_from_E(E, image_points, K)` accepts `N-by-2-by-2` correspondences,
+triangulates each under all four candidates using nonlinear refinement, and
+counts points with positive Z both before and after `R @ X + t`. Failed
+triangulations receive no vote; all-zero counts are rejected, and ties use the
+first maximum. The script checks every adjacent statue pair and the supplied
+single-match example. Selected poses are saved as
+`pair_{i}_{j}_selected_RT.npy`; each JSON pair record includes positive-depth
+counts, failed-triangulation counts, and the selected candidate index (zero-based).
 
 To preview from the repository root:
 

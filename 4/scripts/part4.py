@@ -8,7 +8,8 @@ sys.path.insert(0, str(ROOT / "src"))
 
 import numpy as np
 from triangulation import (estimate_initial_RT, linear_estimate_3d_point,
-                           reprojection_error, jacobian, nonlinear_estimate_3d_point)
+                           reprojection_error, jacobian, nonlinear_estimate_3d_point,
+                           estimate_RT_from_E, _pose_depth_counts)
 
 DATA = ROOT / "assignment 4 code" / "data"
 OUT = ROOT / "media" / "part4"
@@ -116,6 +117,8 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     matrices = np.load(DATA / "statue" / "fundamental_matrices.npy",
                        allow_pickle=True, encoding="latin1")[0]
+    matches = np.load(DATA / "statue" / "matches_subset.npy",
+                      allow_pickle=True, encoding="latin1")[0]
     k = np.diag([FOCAL_LENGTH, FOCAL_LENGTH, 1.])
     records = []
     for index, f in enumerate(matrices):
@@ -136,6 +139,19 @@ def main():
                   "rotation_determinants": determinants.tolist(),
                   "max_rotation_orthogonality_error": float(orthogonality),
                   "translation_lengths": lengths.tolist()}
+        observations = matches[index].T.reshape(-1, 2, 2)
+        pose = estimate_RT_from_E(essential, observations, k)
+        counts, failures = _pose_depth_counts(candidates, observations, k)
+        selected = int(np.argmin(np.linalg.norm(candidates-pose, axis=(1, 2))))
+        if counts[selected] != counts.max() or counts[selected] == 0:
+            raise ValueError("Selected pose does not maximize positive depth in both cameras")
+        pose_file = f"pair_{index+1}_{index+2}_selected_RT.npy"
+        np.save(OUT / pose_file, pose)
+        record.update({"correspondences": len(observations),
+                       "positive_depth_counts": counts.tolist(),
+                       "failed_triangulations": failures.tolist(),
+                       "selected_candidate_index": selected,
+                       "selected_pose": pose.tolist(), "selected_pose_file": pose_file})
         if index == 0:
             errors = np.max(np.abs(candidates-EXAMPLE_RT), axis=(1, 2))
             best = int(np.argmin(errors))
@@ -143,10 +159,19 @@ def main():
                 raise ValueError("No candidate agrees with the supplied four-decimal example")
             record["example_match_index"] = best
             record["example_max_absolute_difference"] = float(errors[best])
+            if not np.allclose(pose, EXAMPLE_RT, atol=5.1e-5, rtol=0):
+                raise ValueError("Depth-selected pose does not match the supplied example")
+            # Repeat the starter's separate one-correspondence pose-selection check.
+            test_points = np.load(DATA / "unit_test_image_matches.npy")[:2][None, :, :]
+            test_pose = estimate_RT_from_E(essential, test_points, k)
+            if not np.allclose(test_pose, EXAMPLE_RT, atol=5.1e-5, rtol=0):
+                raise ValueError("The supplied single-match check selected the wrong pose")
+            record["single_match_example_max_difference"] = float(np.abs(test_pose-EXAMPLE_RT).max())
             print("First pair candidates:\n", candidates)
             print("Maximum difference from supplied example:", errors[best])
         records.append(record)
         print(f"Pair {index+1}-{index+2}: proper rotations and unit translations verified")
+        print("Positive-depth counts:", counts, "; selected candidate:", selected)
     linear_check = check_linear_triangulation(k)
     result = {"focal_length": FOCAL_LENGTH, "intrinsic_matrix": k.tolist(),
               "pose_convention": "X2 = R @ X1 + t; translation has unit length",
