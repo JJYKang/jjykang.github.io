@@ -1,7 +1,7 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA = ROOT / "assignment 4 code" / "data"
+DATA = Path(__file__).resolve().parent / "data"
 OUTPUT = ROOT / "media" / "part1"
 OUTPUT.mkdir(parents=True, exist_ok=True)
 
