@@ -11,9 +11,11 @@ import matplotlib.pyplot as plt
 from epipolar_utils import *
 
 def factorization_method(points_im1, points_im2):
+    # stack and center the image measurements
     W = np.vstack((points_im1[:, :2].T, points_im2[:, :2].T))
     W -= W.mean(axis=1, keepdims=True)
     U, singular_values, Vt = np.linalg.svd(W, full_matrices=False)
+    # retain three components and split their scale between the factors
     root = np.sqrt(singular_values[:3])
     motion = U[:, :3] * root
     structure = root[:, None] * Vt[:3]

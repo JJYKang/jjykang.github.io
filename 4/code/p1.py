@@ -11,12 +11,15 @@ import matplotlib.pyplot as plt
 from epipolar_utils import *
 
 def lls_eight_point_alg(points1, points2):
+    # build the correspondence equations
     A = (points2[:, :, None] * points1[:, None, :]).reshape(-1, 9)
+    # solve for F using the smallest singular vector
     _, _, Vt = np.linalg.svd(A, full_matrices=(len(points1) == 8))
     F = Vt[-1].reshape(3, 3)
     U, singular_values, Vt = np.linalg.svd(F)
-    singular_values[-1] = 0
+    singular_values[-1] = 0  # enforce the rank-two constraint
     F = (U * singular_values) @ Vt
+    # fix the scale and sign for displaying F
     F /= np.linalg.norm(F)
     if F.flat[np.argmax(np.abs(F))] < 0:
         F = -F
@@ -26,6 +29,7 @@ def normalized_eight_point_alg(points1, points2):
     transforms = []
     normalized = []
     for points in (points1, points2):
+        # center each set and scale its mean distance to sqrt(2)
         center = points[:, :2].mean(axis=0)
         distance = np.linalg.norm(points[:, :2] - center, axis=1).mean()
         scale = np.sqrt(2) / distance
@@ -33,8 +37,8 @@ def normalized_eight_point_alg(points1, points2):
                       [0, scale, -scale * center[1]], [0, 0, 1]])
         transforms.append(T)
         normalized.append(points @ T.T)
-    F = lls_eight_point_alg(*normalized)
-    F = transforms[1].T @ F @ transforms[0]
+    F = lls_eight_point_alg(*normalized)  # includes rank-two enforcement
+    F = transforms[1].T @ F @ transforms[0]  # return to pixel coordinates
     F /= np.linalg.norm(F)
     if F.flat[np.argmax(np.abs(F))] < 0:
         F = -F
@@ -67,7 +71,8 @@ def plot_epipolar_lines_on_images(points1, points2, im1, im2, F):
     plt.axis('off')
 
 def compute_distance_to_epipolar_lines(points1, points2, F):
-    lines = points2 @ F
+    lines = points2 @ F  # corresponding lines in Image 1
+    # perpendicular distance, averaged over matching pairs
     distances = np.abs(np.sum(points1 * lines, axis=1))
     distances /= np.linalg.norm(lines[:, :2], axis=1)
     return distances.mean()

@@ -12,31 +12,38 @@ from p1 import normalized_eight_point_alg, plot_epipolar_lines_on_images
 from epipolar_utils import get_data_from_txt_file, compute_rectified_image
 
 def compute_epipole(F):
+    # solve F.T @ e = 0 and normalize the homogeneous coordinate
     U, _, _ = np.linalg.svd(F)
     e = U[:, -1]
     return e / e[2]
 
 def compute_H(e, im):
+    # move the image center to the origin
     height, width = im.shape[:2]
     T = np.array([[1., 0, -width / 2], [0, 1, -height / 2], [0, 0, 1]])
     e = T @ e
+    # rotate the epipole onto the horizontal axis
     alpha = 1 if e[0] >= 0 else -1
     cosine, sine = alpha * e[:2] / np.linalg.norm(e[:2])
     R = np.array([[cosine, sine, 0], [-sine, cosine, 0], [0, 0, 1]])
     rotated = R @ e
+    # map the epipole to infinity
     G = np.eye(3)
     G[2, 0] = -rotated[2] / rotated[0]
-    return np.linalg.inv(T) @ G @ R @ T
+    return np.linalg.inv(T) @ G @ R @ T  # restore the image center
 
 def compute_matching_homographies(e2, F, im2, points1, points2):
     H2 = compute_H(e2, im2)
+    # construct M = [e2]_x F + e2 v.T, with v = (1, 1, 1)
     x, y, z = e2
     cross = np.array([[0, -z, y], [z, 0, -x], [-y, x, 0]])
     M = cross @ F + np.outer(e2, np.ones(3))
+    # transform correspondences into rectified coordinates
     mapped1 = points1 @ (H2 @ M).T
     mapped2 = points2 @ H2.T
     mapped1 /= mapped1[:, 2:3]
     mapped2 /= mapped2[:, 2:3]
+    # fit the horizontal correction while preserving scanlines
     a = np.linalg.lstsq(mapped1, mapped2[:, 0], rcond=None)[0]
     HA = np.eye(3)
     HA[0] = a

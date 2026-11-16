@@ -16,21 +16,25 @@ def estimate_initial_RT(E):
     U, _, Vt = np.linalg.svd(E)
     W = np.array([[0., -1, 0], [1, 0, 0], [0, 0, 1]])
     candidates = []
+    # combine two rotations with opposite translation directions
     for middle in (W, W.T):
         R = U @ middle @ Vt
-        R *= np.linalg.det(R)
+        R *= np.linalg.det(R)  # enforce a proper rotation
         for sign in (1, -1):
             candidates.append(np.column_stack((R, sign * U[:, 2])))
     return np.array(candidates)
 
 def linear_estimate_3d_point(image_points, camera_matrices):
+    # stack two DLT constraints per image
     A = np.empty((2 * len(image_points), 4))
     A[0::2] = image_points[:, 0:1] * camera_matrices[:, 2] - camera_matrices[:, 0]
     A[1::2] = image_points[:, 1:2] * camera_matrices[:, 2] - camera_matrices[:, 1]
+    # solve the homogeneous system and divide by the fourth coordinate
     _, _, Vt = np.linalg.svd(A, full_matrices=False)
     return Vt[-1, :3] / Vt[-1, 3]
 
 def reprojection_error(point_3d, image_points, camera_matrices):
+    # project into each image and subtract the observed coordinates
     projected = camera_matrices @ np.append(point_3d, 1)
     predicted = projected[:, :2] / projected[:, 2:3]
     return (predicted - image_points).reshape(-1)
@@ -38,13 +42,15 @@ def reprojection_error(point_3d, image_points, camera_matrices):
 def jacobian(point_3d, camera_matrices):
     projected = camera_matrices @ np.append(point_3d, 1)
     predicted = projected[:, :2] / projected[:, 2:3]
+    # apply the quotient rule to each projected coordinate
     J = (camera_matrices[:, :2, :3]
          - predicted[:, :, None] * camera_matrices[:, 2:3, :3])
     J /= projected[:, 2, None, None]
     return J.reshape(-1, 3)
 
 def nonlinear_estimate_3d_point(image_points, camera_matrices):
-    point = linear_estimate_3d_point(image_points, camera_matrices)
+    point = linear_estimate_3d_point(image_points, camera_matrices)  # DLT initialization
+    # perform exactly ten Gauss-Newton updates
     for _ in range(10):
         error = reprojection_error(point, image_points, camera_matrices)
         J = jacobian(point, camera_matrices)
@@ -59,7 +65,8 @@ def estimate_RT_from_E(E, image_points, K):
         cameras = np.array([first_camera, K @ RT])
         for matches in image_points:
             point = nonlinear_estimate_3d_point(matches, cameras)
-            second_point = RT[:, :3] @ point + RT[:, 3]
+            second_point = RT[:, :3] @ point + RT[:, 3]  # Camera 2 coordinates
+            # count points in front of both cameras
             if point[2] > 0 and second_point[2] > 0:
                 counts[index] += 1
     return candidates[np.argmax(counts)]
@@ -148,6 +155,7 @@ if __name__ == '__main__':
 
     print('Part F: Statue reconstruction')
 
+    # estimate and merge the camera frames
     frames = [0] * (len(image_paths) - 1)
     for i in range(len(image_paths)-1):
         frames[i] = Frame(matches_subset[i].T, focal_length,
@@ -156,6 +164,7 @@ if __name__ == '__main__':
     merged_frame = merge_all_frames(frames)
 
     camera_matrices = np.zeros((2,3,4))
+    # triangulate the dense matches for every adjacent pair
     dense_structure = np.zeros((0,3))
     for i in range(len(dense_matches)):
         matches = dense_matches[i]
@@ -170,23 +179,17 @@ if __name__ == '__main__':
                 matches[:,j].reshape((2,2)), camera_matrices)
         dense_structure = np.vstack((dense_structure, points_3d[use_point,:]))
 
-    reference = merged_frame.motion[0]
-    camera_centers = [-pose[:, :3].T @ pose[:, 3] for pose in merged_frame.motion[:2]]
-    baseline = np.linalg.norm(camera_centers[1] - camera_centers[0])
-    display_points = (dense_structure @ reference[:, :3].T + reference[:, 3]) / baseline
-    limits = np.array([[-2.25, 2.25], [-2.5, 2.], [2.5, 7.]])
-    visible = ((display_points >= limits[:, 0]) & (display_points <= limits[:, 1])).all(axis=1)
-    shown = display_points[visible]
-
-    fig = plt.figure(figsize=(8, 8), layout='constrained')
+    fig = plt.figure(figsize=(10,10))
     ax = fig.add_subplot(111, projection='3d')
-    points = ax.scatter(*shown.T, c=shown[:, 2], cmap='viridis', s=.4,
-                        linewidths=0, depthshade=False)
-    ax.set(xlim=limits[0], ylim=limits[1], zlim=limits[2],
-           xlabel='X', ylabel='Y', zlabel='Z')
-    ax.set_box_aspect((1, 1, 1))
+    # use smaller points and depth coloring
+    ax.scatter(dense_structure[:,0], dense_structure[:,1], dense_structure[:,2],
+        c=dense_structure[:,2], cmap='viridis', vmin=0, vmax=10,
+        depthshade=False, s=.4, linewidths=0)
+    # tighten the view around the statue
+    ax.set_xlim(-2.25, 2.25)
+    ax.set_ylim(-1.5, 3.5)
+    ax.set_zlim(0, 10)
     ax.view_init(-100, 90)
-    fig.colorbar(points, ax=ax, shrink=.55, pad=.02, label='Depth Z (relative units)')
 
-    fig.savefig(OUTPUT / 'statue_reconstruction.png', dpi=180)
+    fig.savefig(OUTPUT / 'statue_reconstruction.png', dpi=150)
     plt.close(fig)

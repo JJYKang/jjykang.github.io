@@ -50,19 +50,22 @@
 
       <h3 id="part1a">1(a): Linear Least-Squares Eight-Point Implementation</h3>
       <pre><code class="language-python">def lls_eight_point_alg(points1, points2):
+    # build the correspondence equations
     A = (points2[:, :, None] * points1[:, None, :]).reshape(-1, 9)
+    # solve for F using the smallest singular vector
     _, _, Vt = np.linalg.svd(A, full_matrices=(len(points1) == 8))
     F = Vt[-1].reshape(3, 3)
     U, singular_values, Vt = np.linalg.svd(F)
-    singular_values[-1] = 0
+    singular_values[-1] = 0  # enforce the rank-two constraint
     F = (U * singular_values) @ Vt
+    # fix the scale and sign for displaying F
     F /= np.linalg.norm(F)
     if F.flat[np.argmax(np.abs(F))] &lt; 0:
         F = -F
     return F</code></pre>
 
       <h3 id="part1b">1(b): Implementation and Fundamental Matrices</h3>
-      <p>Each matching pair satisfies p<sub>2</sub><sup>T</sup>Fp<sub>1</sub> = 0, where p<sub>1</sub> and p<sub>2</sub> contain the two image coordinates with a final coordinate of 1. The coordinates are used directly in pixels, without centering or rescaling.</p>
+      <p>Each matching pair satisfies p<sub>2</sub><sup>T</sup>Fp<sub>1</sub> = 0, where p<sub>1</sub> and p<sub>2</sub> contain the two image coordinates with a final coordinate of 1. The coordinates are used directly in pixels.</p>
       <ol>
         <li><strong>Build the system:</strong> Expand each matching pair into one row of A, with the nine entries of F stored row by row in a vector f. Stacking all pairs gives a 37&times;9 system for Set 1 and a 46&times;9 system for Set 2.</li>
         <li><strong>Solve:</strong> Compute the SVD of A with <code>np.linalg.svd</code> and take the last row of V<sup>T</sup>, corresponding to the smallest singular value. This gives a unit-length vector f that makes Af as close to zero as possible. Reshape it into a 3&times;3 matrix.</li>
@@ -88,6 +91,7 @@
     transforms = []
     normalized = []
     for points in (points1, points2):
+        # center each set and scale its mean distance to sqrt(2)
         center = points[:, :2].mean(axis=0)
         distance = np.linalg.norm(points[:, :2] - center, axis=1).mean()
         scale = np.sqrt(2) / distance
@@ -95,8 +99,8 @@
                       [0, scale, -scale * center[1]], [0, 0, 1]])
         transforms.append(T)
         normalized.append(points @ T.T)
-    F = lls_eight_point_alg(*normalized)
-    F = transforms[1].T @ F @ transforms[0]
+    F = lls_eight_point_alg(*normalized)  # includes rank-two enforcement
+    F = transforms[1].T @ F @ transforms[0]  # return to pixel coordinates
     F /= np.linalg.norm(F)
     if F.flat[np.argmax(np.abs(F))] &lt; 0:
         F = -F
@@ -115,7 +119,8 @@
 
       <h3 id="part1e">1(e): Point-to-Line Distance Implementation</h3>
       <pre><code class="language-python">def compute_distance_to_epipolar_lines(points1, points2, F):
-    lines = points2 @ F
+    lines = points2 @ F  # corresponding lines in Image 1
+    # perpendicular distance, averaged over matching pairs
     distances = np.abs(np.sum(points1 * lines, axis=1))
     distances /= np.linalg.norm(lines[:, :2], axis=1)
     return distances.mean()</code></pre>
@@ -141,10 +146,9 @@
           <tr><th scope="row">Set 2</th><td>Normalized</td><td>0.8895</td><td>0.8917</td></tr>
         </tbody>
       </table></div>
-      <p>The normalized method gives mean distances below one pixel in all four images. The unnormalized estimates are much worse, with distances ranging from 9.7014 to 28.0257 pixels. Products of pixel coordinates can be much larger than the other terms in A, making the equations poorly balanced. Centering and scaling the points reduces this imbalance before solving for F.</p>
 
       <h4>Set 1: Epipolar Lines</h4>
-      <p>Red lines are predicted from points in the other image; blue markers show the measured points. Each panel shows the original image coordinate system.</p>
+      <p>Red lines are predicted from points in the other image; blue markers show the measured points.</p>
       <div class="stack-sheet img-card">
         <a href="./media/part1/set1_linear_epipolar.png"><img src="./media/part1/set1_linear_epipolar.png" alt="Set 1 linear estimate: epipolar lines visibly miss many matching points" width="1500" height="750" loading="lazy"></a>
         <div class="img-caption"><div class="img-title">Linear Least Squares</div></div>
@@ -163,7 +167,7 @@
         <a href="./media/part1/set2_normalized_epipolar.png"><img src="./media/part1/set2_normalized_epipolar.png" alt="Set 2 normalized estimate: epipolar lines pass close to the measured points" width="1500" height="750" loading="lazy"></a>
         <div class="img-caption"><div class="img-title">Normalized Eight-Point Algorithm</div></div>
       </div>
-      <p>The unnormalized lines miss several points around the roof and base. After normalization, the lines pass much closer to the blue markers in both sets, consistent with the table. The distances measure the supplied points used to fit F; they do not measure accuracy on new correspondences.</p>
+      <p>The table shows that the normalized method gives much smaller average distances between the matching points and their epipolar lines. The images show the same improvement, with the red lines passing much closer to the blue markers.</p>
     </section>
 
     <section id="part2">
@@ -173,19 +177,23 @@
 
       <h3 id="part2a">2(a): Compute the Epipoles</h3>
       <pre><code class="language-python">def compute_epipole(F):
+    # solve F.T @ e = 0 and normalize the homogeneous coordinate
     U, _, _ = np.linalg.svd(F)
     e = U[:, -1]
     return e / e[2]</code></pre>
 
       <h3 id="part2b">2(b): Map an Epipole to Infinity</h3>
       <pre><code class="language-python">def compute_H(e, im):
+    # move the image center to the origin
     height, width = im.shape[:2]
     T = np.array([[1., 0, -width / 2], [0, 1, -height / 2], [0, 0, 1]])
     e = T @ e
+    # rotate the epipole onto the horizontal axis
     alpha = 1 if e[0] &gt;= 0 else -1
     cosine, sine = alpha * e[:2] / np.linalg.norm(e[:2])
     R = np.array([[cosine, sine, 0], [-sine, cosine, 0], [0, 0, 1]])
     rotated = R @ e
+    # map the epipole to infinity
     G = np.eye(3)
     G[2, 0] = -rotated[2] / rotated[0]
     return np.linalg.inv(T) @ G @ R @ T</code></pre>
@@ -194,13 +202,16 @@
       <p>Uses <code>compute_H()</code> from <a href="#part2b">2(b)</a>.</p>
       <pre><code class="language-python">def compute_matching_homographies(e2, F, im2, points1, points2):
     H2 = compute_H(e2, im2)
+    # construct M = [e2]_x F + e2 v.T, with v = (1, 1, 1)
     x, y, z = e2
     cross = np.array([[0, -z, y], [z, 0, -x], [-y, x, 0]])
     M = cross @ F + np.outer(e2, np.ones(3))
+    # transform correspondences into rectified coordinates
     mapped1 = points1 @ (H2 @ M).T
     mapped2 = points2 @ H2.T
     mapped1 /= mapped1[:, 2:3]
     mapped2 /= mapped2[:, 2:3]
+    # fit the horizontal correction while preserving scanlines
     a = np.linalg.lstsq(mapped1, mapped2[:, 0], rcond=None)[0]
     HA = np.eye(3)
     HA[0] = a
@@ -211,7 +222,8 @@
         <a href="./media/part2/set1_rectified_pair.png"><img src="./media/part2/set1_rectified_pair.png" alt="Rectified Set 1 images with red epipolar lines and blue matching points" width="1500" height="750" loading="lazy"></a>
         <div class="img-caption"><div class="img-title">Rectified Set 1</div>Red epipolar lines and blue matching points after rectification.</div>
       </div>
-      <p>The epipolar lines are now nearly horizontal in both images. This reduces correspondence search to varying the x-coordinate along the matching epipolar line instead of searching across the image. A narrow band around the line allows for errors in the estimated transforms.</p>
+      <p>The rectified images show nearly horizontal red epipolar lines passing close to the blue matching points. The homographies align the epipolar lines with the horizontal image axis.</p>
+      <p>Rectification makes corresponding points easier to find by aligning the epipolar lines horizontally. Given a point in one image, we can find its match by searching along the corresponding horizontal line in the other image. We compare candidate points or image patches by varying the x-coordinate, making the search one-dimensional. This reduces the number of positions to check and makes matching simpler and faster.</p>
     </section>
 
     <section id="part3">
@@ -220,9 +232,11 @@
 
       <h3 id="part3a">3(a): Factorization Implementation</h3>
       <pre><code class="language-python">def factorization_method(points_im1, points_im2):
+    # stack and center the image measurements
     W = np.vstack((points_im1[:, :2].T, points_im2[:, :2].T))
     W -= W.mean(axis=1, keepdims=True)
     U, singular_values, Vt = np.linalg.svd(W, full_matrices=False)
+    # retain three components and split their scale between the factors
     root = np.sqrt(singular_values[:3])
     motion = U[:, :3] * root
     structure = root[:, None] * Vt[:3]
@@ -241,21 +255,21 @@
         <a href="./media/part3/set1_reconstruction_comparison.png"><img src="./media/part3/set1_reconstruction_comparison.png" alt="Full-set factorization output and supplied ground-truth points" width="1500" height="750" loading="lazy"></a>
         <div class="img-caption"><div class="img-title">Full Set: 37 Points</div>Factorization output beside the supplied ground truth.</div>
       </div>
-      <p>The full reconstruction recovers the rows of points and the broader arrangement of the model, but its position, size, and orientation differ from the ground truth. Centering removes the original translation, and the SVD chooses its own coordinate axes and scale. The image measurements therefore do not determine the same 3D coordinate system used by the ground truth.</p>
-      <p>A rotation or reflection and a change of scale can account for the coordinate-system differences. The affine factorization can also leave shear or unequal axis scales, so an exact match after only rotation and uniform scaling is not guaranteed. Perspective effects and measurement errors contribute to the remaining shape differences.</p>
+      <p>The reconstruction shows the same rows and overall arrangement of points as the ground truth, with a different size and orientation. Some differences remain in the spacing between points.</p>
+      <p>The scale and rotation differences occur because factorization estimates the 3D structure and camera motion together. Scaling or rotating the structure can be compensated for by a corresponding change in the motion matrix, giving the same image coordinates. The SVD therefore produces a reconstruction in its own coordinate system, with its own scale and orientation.</p>
 
       <h3 id="part3d">3(d): Singular Values</h3>
       <pre><code>[959.5852, 540.4761, 184.4317, 27.9152]</code></pre>
-      <p>W has four rows, so it can have four nonzero singular values. Here, perspective effects and correspondence errors prevent the measured coordinates from fitting an exact rank-three affine model. They leave a fourth singular value of 27.9152, which is smaller than the first three but not zero.</p>
-      <p>In the ideal model, W = MS, with M of size 4&times;3 and S of size 3&times;37, so the product has rank at most three. When the points span three dimensions and the views constrain them, three singular values are nonzero and the fourth is zero. Centering is important: it removes image translation, which could otherwise add another rank-one term.</p>
+      <p>W has four rows, so it can have four nonzero singular values. Perspective effects and correspondence errors introduce variation beyond the ideal rank-three affine model, producing the fourth singular value of 27.9152.</p>
+      <p>In the ideal model, W = MS, with M of size 4&times;3 and S of size 3&times;37, so the product has rank at most three. When the points span three dimensions and the views constrain them, three singular values are nonzero and the fourth is zero. Centering removes image translation before the rank-three factorization.</p>
 
       <h3 id="part3e">3(e): Reconstruction from Fewer Points</h3>
       <div class="stack-sheet img-card">
         <a href="./media/part3/set1_subset_reconstruction_comparison.png"><img src="./media/part3/set1_subset_reconstruction_comparison.png" alt="Subset factorization output beside the nearly planar ground-truth points" width="1500" height="750" loading="lazy"></a>
         <div class="img-caption"><div class="img-title">Subset: 18 Points</div>Factorization output and ground truth for the smaller set of correspondences.</div>
       </div>
-      <p>The subset still contains rows of points, but their relative positions are less consistent with the ground truth. The ground-truth points lie close to a plane, while the reconstruction spreads them through a thicker region. This is a shape difference, rather than just the change in scale and orientation seen in the full reconstruction.</p>
-      <p>The subset's geometry matters as well as its smaller size. These 18 points vary mainly along two directions, with very little variation perpendicular to their plane. That makes the third dimension hard to estimate. The algorithm still retains three SVD components, so errors in the correspondences and the affine approximation can be mistaken for depth. The full set spans more of the 3D scene and constrains this direction more strongly.</p>
+      <p>The subset reconstruction resembles the ground truth less closely than the full reconstruction. It preserves the rows of points, but their relative positions are more distorted. The ground-truth points lie close to a plane, while the reconstructed points spread through a thicker region.</p>
+      <p>This occurs because the 18 points in the subset cover a nearly planar part of the scene, giving little information about depth perpendicular to that plane. The third SVD component becomes more sensitive to errors in the matching points, which appear as extra thickness in the reconstruction. The full set covers more of the 3D scene and provides stronger information about this depth.</p>
 
       <h3 id="part3f">3(f): Singular-Value Comparison</h3>
       <div class="table-scroll"><table>
@@ -265,8 +279,9 @@
           <tr><th scope="row">Subset (18 points)</th><td>264.5440</td><td>210.0607</td><td>7.2192</td><td>5.1286</td></tr>
         </tbody>
       </table></div>
-      <p>All four values decrease with the smaller set of points and its smaller spatial extent. The largest relative drop is in the third value, from 184.4317 to 7.2192. Relative to the second value, &sigma;<sub>3</sub>/&sigma;<sub>2</sub> falls from 0.3412 to 0.0344. Most of the subset's variation is therefore concentrated in its first two components, consistent with the nearly planar ground truth.</p>
-      <p>The gap between the third and fourth values also shrinks: &sigma;<sub>3</sub>/&sigma;<sub>4</sub> falls from 6.6069 to 1.4076. The third component is now only slightly larger than the fourth component that the algorithm discards. This makes weak depth variation harder to separate from measurement errors and perspective effects, explaining the extra thickness visible in 3(e).</p>
+      <p>All four singular values decrease when using the subset. This occurs because the subset contains fewer points spread over a smaller region, so the centered measurements contain less total variation.</p>
+      <p>The third value drops most sharply, from 184.4317 to 7.2192, because the subset's points lie close to a plane. Their positions vary mainly along two directions, with little variation perpendicular to the plane. This gives two strong SVD components and a much weaker third component, explaining why &sigma;<sub>3</sub>/&sigma;<sub>2</sub> falls from 0.3412 to 0.0344.</p>
+      <p>The third value also becomes much closer to the fourth: &sigma;<sub>3</sub>/&sigma;<sub>4</sub> falls from 6.6069 to 1.4076. The fourth component captures residual variation from matching errors and perspective effects. With the third component now similar in size, these errors have a larger influence on the depth recovered from it. This produces the extra thickness seen in the subset reconstruction.</p>
     </section>
 
     <section id="part4">
@@ -288,29 +303,34 @@
     U, _, Vt = np.linalg.svd(E)
     W = np.array([[0., -1, 0], [1, 0, 0], [0, 0, 1]])
     candidates = []
+    # combine two rotations with opposite translation directions
     for middle in (W, W.T):
         R = U @ middle @ Vt
-        R *= np.linalg.det(R)
+        R *= np.linalg.det(R)  # enforce a proper rotation
         for sign in (1, -1):
             candidates.append(np.column_stack((R, sign * U[:, 2])))
     return np.array(candidates)</code></pre>
 
       <h3 id="part4b">4(b): Linear Triangulation</h3>
       <pre><code class="language-python">def linear_estimate_3d_point(image_points, camera_matrices):
+    # stack two DLT constraints per image
     A = np.empty((2 * len(image_points), 4))
     A[0::2] = image_points[:, 0:1] * camera_matrices[:, 2] - camera_matrices[:, 0]
     A[1::2] = image_points[:, 1:2] * camera_matrices[:, 2] - camera_matrices[:, 1]
+    # solve the homogeneous system and divide by the fourth coordinate
     _, _, Vt = np.linalg.svd(A, full_matrices=False)
     return Vt[-1, :3] / Vt[-1, 3]</code></pre>
 
       <h3 id="part4c">4(c): Reprojection Error and Jacobian</h3>
       <pre><code class="language-python">def reprojection_error(point_3d, image_points, camera_matrices):
+    # project into each image and subtract the observed coordinates
     projected = camera_matrices @ np.append(point_3d, 1)
     predicted = projected[:, :2] / projected[:, 2:3]
     return (predicted - image_points).reshape(-1)</code></pre>
       <pre><code class="language-python">def jacobian(point_3d, camera_matrices):
     projected = camera_matrices @ np.append(point_3d, 1)
     predicted = projected[:, :2] / projected[:, 2:3]
+    # apply the quotient rule to each projected coordinate
     J = (camera_matrices[:, :2, :3]
          - predicted[:, :, None] * camera_matrices[:, 2:3, :3])
     J /= projected[:, 2, None, None]
@@ -319,7 +339,8 @@
       <h3 id="part4d">4(d): Nonlinear Triangulation</h3>
       <p>Uses the linear initialization from <a href="#part4b">4(b)</a> and the residual and Jacobian from <a href="#part4c">4(c)</a>.</p>
       <pre><code class="language-python">def nonlinear_estimate_3d_point(image_points, camera_matrices):
-    point = linear_estimate_3d_point(image_points, camera_matrices)
+    point = linear_estimate_3d_point(image_points, camera_matrices)  # DLT initialization
+    # perform exactly ten Gauss-Newton updates
     for _ in range(10):
         error = reprojection_error(point, image_points, camera_matrices)
         J = jacobian(point, camera_matrices)
@@ -336,58 +357,28 @@
         cameras = np.array([first_camera, K @ RT])
         for matches in image_points:
             point = nonlinear_estimate_3d_point(matches, cameras)
-            second_point = RT[:, :3] @ point + RT[:, 3]
+            second_point = RT[:, :3] @ point + RT[:, 3]  # Camera 2 coordinates
+            # count points in front of both cameras
             if point[2] &gt; 0 and second_point[2] &gt; 0:
                 counts[index] += 1
     return candidates[np.argmax(counts)]</code></pre>
 
       <h3 id="part4f">4(f): Statue Reconstruction and Larger Scenes</h3>
       <p>The supplied framework uses pose selection from <a href="#part4e">4(e)</a> and triangulation from <a href="#part4d">4(d)</a>.</p>
-      <pre><code class="language-python">frames = [0] * (len(image_paths) - 1)
-for i in range(len(image_paths)-1):
-    frames[i] = Frame(matches_subset[i].T, focal_length,
-            fundamental_matrices[i], im_width, im_height)
-    bundle_adjustment(frames[i])
-merged_frame = merge_all_frames(frames)
+      <pre><code class="language-python"># use smaller points and depth coloring
+ax.scatter(dense_structure[:,0], dense_structure[:,1], dense_structure[:,2],
+    c=dense_structure[:,2], cmap='viridis', vmin=0, vmax=10,
+    depthshade=False, s=.4, linewidths=0)
 
-camera_matrices = np.zeros((2,3,4))
-dense_structure = np.zeros((0,3))
-for i in range(len(dense_matches)):
-    matches = dense_matches[i]
-    camera_matrices[0,:,:] = merged_frame.K.dot(
-        merged_frame.motion[i,:,:])
-    camera_matrices[1,:,:] = merged_frame.K.dot(
-            merged_frame.motion[i+1,:,:])
-    points_3d = np.zeros((matches.shape[1], 3))
-    use_point = np.array([True]*matches.shape[1])
-    for j in range(matches.shape[1]):
-        points_3d[j,:] = nonlinear_estimate_3d_point(
-            matches[:,j].reshape((2,2)), camera_matrices)
-    dense_structure = np.vstack((dense_structure, points_3d[use_point,:]))
+# tighten the view around the statue
+ax.set_xlim(-2.25, 2.25)
+ax.set_ylim(-1.5, 3.5)
 
-reference = merged_frame.motion[0]
-camera_centers = [-pose[:, :3].T @ pose[:, 3] for pose in merged_frame.motion[:2]]
-baseline = np.linalg.norm(camera_centers[1] - camera_centers[0])
-display_points = (dense_structure @ reference[:, :3].T + reference[:, 3]) / baseline
-limits = np.array([[-2.25, 2.25], [-2.5, 2.], [2.5, 7.]])
-visible = ((display_points &gt;= limits[:, 0]) &amp; (display_points &lt;= limits[:, 1])).all(axis=1)
-shown = display_points[visible]
-
-fig = plt.figure(figsize=(8, 8), layout='constrained')
-ax = fig.add_subplot(111, projection='3d')
-points = ax.scatter(*shown.T, c=shown[:, 2], cmap='viridis', s=.4,
-                    linewidths=0, depthshade=False)
-ax.set(xlim=limits[0], ylim=limits[1], zlim=limits[2],
-       xlabel='X', ylabel='Y', zlabel='Z')
-ax.set_box_aspect((1, 1, 1))
-ax.view_init(-100, 90)
-fig.colorbar(points, ax=ax, shrink=.55, pad=.02, label='Depth Z (relative units)')
-
-fig.savefig(OUTPUT / 'statue_reconstruction.png', dpi=180)
+fig.savefig(OUTPUT / 'statue_reconstruction.png', dpi=150)
 plt.close(fig)</code></pre>
       <div class="stack-sheet img-card">
-        <a href="./media/part4/statue_reconstruction.png"><img src="./media/part4/statue_reconstruction.png" alt="Statue point cloud with depth coloring and a closer view of the head and pedestal" width="1440" height="1440" loading="lazy"></a>
-        <div class="img-caption"><div class="img-title">Statue Reconstruction</div>Closer view of the reconstruction from five images. Color shows depth; one coordinate unit is the distance between the first two cameras.</div>
+        <a href="./media/part4/statue_reconstruction.png"><img src="./media/part4/statue_reconstruction.png" alt="Statue point cloud with depth coloring and a closer view of the head and pedestal" width="1500" height="1500" loading="lazy"></a>
+        <div class="img-caption"><div class="img-title">Statue Reconstruction</div>Reconstruction from five images with a closer view, smaller points, and depth coloring.</div>
       </div>
       <p>A house needs more viewpoints to cover its larger extent, and surfaces hidden from one position may only become visible from another. Blank walls provide few distinctive features, while repeated windows and bricks can match the wrong part of the building. Changes in lighting, reflections, and moving objects also make matching less reliable than for the small, stationary statue.</p>
       <p>More images mean more camera positions and 3D points to optimize together in bundle adjustment, increasing memory use and computation. Small camera-position and orientation errors can also accumulate along the sequence, causing drift. Overlapping views and revisiting earlier areas help connect the reconstruction. For distant surfaces, small camera movements shift points by very few pixels, so larger separations are needed for reliable depth; these can reduce overlap and make matching harder.</p>
